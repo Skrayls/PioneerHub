@@ -6,3 +6,6 @@ Cloudflare Worker name must match `wrangler.jsonc`: `pioneerhub`. Build command:
 
 ## Rollback
 Record commit SHA, deployment ID, time and change. Promote the last known-good Cloudflare Worker version; then fix/revert via PR. No direct local production deployment outside a documented incident procedure.
+
+## Release checkpoints
+After a stable production validation, create an annotated Git tag in the form `vYYYY.MM.DD.N` pointing to the exact deployed `main` commit. Record the tag, deployment ID, time and rollback predecessor in `CHANGELOG.md`.

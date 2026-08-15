@@ -11,11 +11,11 @@
 - Completed initial official Pi policy and EU regulatory screening.
 - Defined MVP, architecture, safety/privacy baseline, analytics events and Stage 1 plan.
 - Built a static, mobile-first Core prototype with Learn, Safety Center, App Radar and Payment Lab (Testnet-only education).
-- Added Cloudflare Workers + Static Assets architecture, environment separation, edge security headers, CI, Dependabot, threat model and recovery documentation.
+- Added Cloudflare Workers + Static Assets architecture, environment separation, edge security headers, CI, Dependabot, local/CI secret scanning, threat model and recovery documentation.
 
 ## Current constraint
 
-No GitHub CLI or Cloudflare Wrangler authentication is available in this environment. No domain, public social/community channel, Pi Developer Portal credentials, production hosting, or analytics account has been authorized/provided. Prototype is local only.
+No GitHub App authentication material or Cloudflare authentication is available in this environment. GitHub Free private-repository protected branches/rulesets are documented as NOT AVAILABLE with compensating controls. No domain, public social/community channel, Pi Developer Portal credentials, production hosting, or analytics account has been authorized/provided. Prototype is local only.
 
 ## Next executable item
 

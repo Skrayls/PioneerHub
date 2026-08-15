@@ -9,4 +9,4 @@
 | Empty marketplace/community | Medium | No marketplace; use practical content and tools first. | Stage 1 evidence |
 | Platform dependency | Medium | Own code, content, domain (after approval), analytics and exportable data. | Ongoing |
 | Paid-app trust conflict | Medium | Separate editorial scoring from sponsorship; label paid exposure. | App Radar launch |
-
+| GitHub Free private repo cannot technically enforce protected `main` | Medium | Scoped single-repo GitHub App, PR-only OpenClaw policy, mandatory CI, deploy-from-main only, release tags, Git history backup and Founder Gate for high-risk changes. | Always |

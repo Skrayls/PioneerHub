@@ -13,3 +13,9 @@
 - Added CI, Dependabot, environment templates and lockfile.
 - Added infrastructure, deployment, observability, threat-model, data-classification and disaster-recovery documentation.
 - External GitHub repository/security configuration and Cloudflare deployment remain pending founder account authorization.
+
+## 2026-08-15 — GitHub Free compensating controls
+
+- Recorded GitHub Free private-repository branch-protection limitation honestly.
+- Added binding PR-only automation policy, release checkpoint policy and documented emergency-only direct-main exception.
+- Added tracked-file secret scanner and CI enforcement.

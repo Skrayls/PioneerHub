@@ -14,4 +14,6 @@ GitHub is source only: no Cloudflare or Pi secret belongs in source, Actions sec
 
 ## CI and repository controls
 
-`main` must be protected in GitHub: PR-required merge, required CI, no force pushes, no deletion and admin enforcement where plan allows. Actions have least-privilege permissions and immutable action SHAs. Actual GitHub feature availability remains pending repository creation.
+GitHub Free private repositories cannot technically enforce protected `main`/rulesets. The operating control is therefore binding: routine work must use `feature/* → PR → CI PASS → merge → deploy from main`; direct `main` push is prohibited except a documented emergency recovery. Every release maps to a Git commit and stable production releases receive a Git tag/checkpoint.
+
+Compensating controls: one scoped GitHub App installed only on PioneerHub; minimum App permissions; no global PAT or founder account credential; CI on every PR; local and CI secret scanning; Cloudflare deploy only from validated `main`; independent GitHub history; Founder Gate for high-risk changes. Actions have least-privilege permissions and immutable action SHAs.
