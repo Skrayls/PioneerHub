@@ -1,0 +1,7 @@
+{
+  "name": "pioneerhub-lithuania",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": { "test": "node app/tests/smoke.test.mjs" }
+}
