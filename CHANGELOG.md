@@ -7,3 +7,9 @@
 - Added static PioneerHub Core prototype.
 - No public launch, paid service, Pi transaction, personal-data collection or external account action performed.
 
+## 2026-08-15 — Stage 0.5 infrastructure foundation (local)
+
+- Added Workers + Static Assets configuration and a non-dynamic Worker entrypoint with baseline headers.
+- Added CI, Dependabot, environment templates and lockfile.
+- Added infrastructure, deployment, observability, threat-model, data-classification and disaster-recovery documentation.
+- External GitHub repository/security configuration and Cloudflare deployment remain pending founder account authorization.

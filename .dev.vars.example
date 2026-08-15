@@ -1,0 +1,3 @@
+# Local Worker secrets. Copy to ignored .dev.vars; never commit the copy.
+# PI_API_KEY_TESTNET=
+# PI_VALIDATION_KEY_TESTNET=

@@ -2,7 +2,7 @@
 
 ## Stage 0 / MVP
 
-Static HTML, CSS and JavaScript in `app/`, deployable to a static host. No server, authentication, wallets, secrets, cookies or personal-data collection. This is intentional.
+Static HTML, CSS and JavaScript in `app/`, served through a Cloudflare Worker Static Assets binding. No server-side feature routes, authentication, wallets, secrets, cookies or personal-data collection. This is intentional.
 
 ## Stage 1 target
 
@@ -18,5 +18,4 @@ Public content is separate from any future Pi-authenticated app. Payment request
 
 ## Deployment
 
-Static preview first; production host and domain are a Founder Approval Gate. Use HTTPS, CSP, security headers, immutable deployments, backups and rollback.
-
+Cloudflare Workers + Static Assets is the default. GitHub `main` is the deployment source, with Cloudflare Workers Builds for production and branch previews. Production host and domain are a Founder Approval Gate. Use HTTPS, tested CSP/security headers, immutable deployments, logs, backups and rollback.

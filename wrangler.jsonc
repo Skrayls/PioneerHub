@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pioneerhub",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": true,
+  "assets": { "directory": "./app", "binding": "ASSETS" },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "vars": { "APP_ENV": "production", "PI_NETWORK": "disabled" },
+  "env": { "staging": { "name": "pioneerhub-staging", "workers_dev": true, "vars": { "APP_ENV": "staging", "PI_NETWORK": "testnet" }, "observability": { "enabled": true, "head_sampling_rate": 1 } } }
+}

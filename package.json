@@ -3,5 +3,16 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "scripts": { "test": "node app/tests/smoke.test.mjs" }
+  "scripts": {
+    "lint": "node --check app/app.js && node --check src/worker.js",
+    "typecheck": "node --check app/tests/smoke.test.mjs",
+    "test": "node app/tests/smoke.test.mjs",
+    "build": "npm run lint && npm run typecheck && npm test",
+    "dev": "wrangler dev",
+    "deploy:staging": "wrangler deploy --env staging",
+    "validate:worker": "wrangler deploy --dry-run --env=\"\""
+  },
+  "devDependencies": {
+    "wrangler": "^4.123.0"
+  }
 }
