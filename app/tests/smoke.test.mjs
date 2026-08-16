@@ -50,7 +50,7 @@ assert.match(response.headers.get('content-security-policy'), /default-src 'self
 assert.match(response.headers.get('content-security-policy'), /https:\/\/\*\.pinet\.com/);
 assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
-assert.equal(response.headers.get('cache-control'), 'public, max-age=86400');
+assert.equal(response.headers.get('cache-control'), 'no-cache');
 
 const health = await worker.fetch(new Request('https://example.test/healthz'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'staging' });
 assert.equal(health.status, 200);

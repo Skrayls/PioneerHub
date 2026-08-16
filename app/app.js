@@ -398,7 +398,8 @@ function bindLab() {
       payment.textContent = 'Sukurti 0.01 Test-Pi mokėjimą';
       track('pi_auth_complete');
     } catch (error) {
-      authStatus.textContent = `Prisijungimo nepavyko patvirtinti (${error.message || stage}). Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.`;
+      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT|PI-REJECTED|ME-VERIFY|SESSION|NETWORK)$/.test(error?.message) ? error.message : stage || 'AUTH-UNKNOWN';
+      authStatus.textContent = `Prisijungimo nepavyko patvirtinti. Diagnostikos kodas: ${code}. Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.`;
       auth.disabled = false;
     }
   });
