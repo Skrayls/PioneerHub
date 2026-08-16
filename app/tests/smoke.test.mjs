@@ -15,6 +15,11 @@ const response = await worker.fetch(new Request('https://example.test/app.js'), 
   ASSETS: { fetch: async () => new Response('ok', { status: 200, headers: { 'content-type': 'application/javascript' } }) },
 });
 assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
-assert.equal(response.headers.get('x-frame-options'), 'SAMEORIGIN');
+assert.equal(response.headers.get('x-frame-options'), 'DENY');
 assert.match(response.headers.get('content-security-policy'), /default-src 'self'/);
+assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'public, max-age=86400');
+
+const health = await worker.fetch(new Request('https://example.test/healthz'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'staging' });
+assert.equal(health.status, 200);
+assert.equal((await health.json()).status, 'ok');

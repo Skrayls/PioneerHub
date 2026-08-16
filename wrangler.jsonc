@@ -4,6 +4,7 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-08-15",
   "workers_dev": true,
+  "preview_urls": true,
   "assets": { "directory": "./app", "binding": "ASSETS" },
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "vars": { "APP_ENV": "production", "PI_NETWORK": "disabled" },
