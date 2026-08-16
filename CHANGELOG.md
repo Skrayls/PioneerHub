@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 — GitHub repository bootstrap
+
+- Connected the private founder-owned `Skrayls/PioneerHub` repository to the scoped PioneerHub GitHub App.
+- Published the audited Stage 0 and Stage 0.5 history to `main`.
+- Verified smoke tests, tracked-file secret scan and production-dependency audit before publication.
+
 ## 2026-08-15 — Stage 0 foundation checkpoint
 
 - Initialized PioneerHub repository and operating documentation.

@@ -15,8 +15,8 @@
 
 ## Current constraint
 
-No GitHub App authentication material or Cloudflare authentication is available in this environment. GitHub Free private-repository protected branches/rulesets are documented as NOT AVAILABLE with compensating controls. No domain, public social/community channel, Pi Developer Portal credentials, production hosting, or analytics account has been authorized/provided. Prototype is local only.
+The private founder-owned GitHub repository is connected and the scoped PioneerHub GitHub App is installed. GitHub Free private-repository protected branches/rulesets are documented as NOT AVAILABLE with compensating controls. The App intentionally has no administration permission, so owner-only repository settings remain outside this automation boundary. No Cloudflare authentication, domain, public social/community channel, Pi Developer Portal credentials, production hosting, or analytics account has been authorized/provided. Prototype is local only.
 
 ## Next executable item
 
-Create private founder-owned GitHub repository, push this history, enable repository controls, then connect Cloudflare Workers Builds and deploy the staging Worker.
+Confirm any owner-only repository settings desired by the founder, then connect Cloudflare Workers Builds and deploy the staging Worker.
