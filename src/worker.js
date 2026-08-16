@@ -1,6 +1,13 @@
 /** Public static shell with a deliberately tiny, non-PII operational endpoint. */
 export default { async fetch(request, env) {
   const url = new URL(request.url);
+  if (url.pathname === "/events" && request.method === "POST") {
+    const event = (await request.text()).trim();
+    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "payment_lab_start", "payment_lab_complete"]);
+    if (!allowed.has(event)) return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+    console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
+    return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  }
   if (url.pathname === "/healthz") {
     return Response.json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV, release: env.RELEASE_ID || "unmarked" }, {
       headers: { "Cache-Control": "no-store" },

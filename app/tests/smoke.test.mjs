@@ -9,6 +9,7 @@ assert.match(html, /30 sekundžių patikra/i);
 assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
 assert.match(js, /passphrase/);
+assert.match(js, /learn_article_open/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.match(css, /@media/);
 
@@ -24,3 +25,6 @@ assert.equal(response.headers.get('cache-control'), 'public, max-age=86400');
 const health = await worker.fetch(new Request('https://example.test/healthz'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'staging' });
 assert.equal(health.status, 200);
 assert.equal((await health.json()).status, 'ok');
+
+const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+assert.equal(event.status, 204);
