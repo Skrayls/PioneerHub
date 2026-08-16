@@ -84,7 +84,7 @@ assert.equal(arbitraryEvent.status, 204);
 const piStatus = await worker.fetch(new Request('https://example.test/api/pi/status'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {} });
 assert.deepEqual(await piStatus.json(), { network: 'testnet', auth: 'ready', payments: 'ready' });
 
-const malformedAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret' });
+const malformedAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', AUTH_SESSIONS: {} });
 assert.equal(malformedAuth.status, 400);
 assert.doesNotMatch(await malformedAuth.text(), /secret|token/i);
 

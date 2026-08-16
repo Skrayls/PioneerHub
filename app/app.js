@@ -346,7 +346,7 @@ async function request(path, body, authorization) {
   const headers = { 'Content-Type': 'application/json' };
   if (authorization) headers.Authorization = `Bearer ${authorization}`;
   const response = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body || {}) });
-  if (!response.ok) throw new Error('request_failed');
+  if (!response.ok) { const result = await response.json().catch(() => ({})); throw new Error(result.code || 'AUTH-NETWORK'); }
   return response.json();
 }
 
@@ -365,7 +365,7 @@ function loadPiSdk() {
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
-  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab: mokėjimo procesas be Mainnet rizikos.</h2><p><strong>LIVE:</strong> saugus Testnet prisijungimo ir mokėjimo flow veikia tik Pi Browser aplinkoje. <strong>READY / PREPARED:</strong> serveris tikrina tokeną ir mokėjimo būsenas. <strong>REQUIRES PI DEVELOPER PORTAL CONFIGURATION:</strong> jei Portal konfigūracija kada nors būtų pakeista, veiksmai lieka užblokuoti.</p></div><div class="status-strip"><span class="state live">LIVE: Testnet-only Payment Lab</span><span class="state ready">READY / PREPARED: server verification ir duplicate protection</span><span class="state blocked">REQUIRES PI DEVELOPER PORTAL CONFIGURATION: be jos joks veiksmas nevyksta</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Prisijunk tik per Pi Browser</h3><p>Nėra el. pašto, slaptažodžio ar wallet importo. Pi SDK tokenas siunčiamas tik serveriniam <code>/me</code> patikrinimui; passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Prisijungti prie Testnet Lab</button><p id="piAuthStatus" class="note" aria-live="polite">Atidaryk PioneerHub per Pi Browser. Iki patikrinto prisijungimo mokėjimo mygtukas neveikia.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Vienas aiškus Test-Pi bandymas</h3><p>Po patikrinto prisijungimo gali pats sukurti <strong>0.01 Test-Pi</strong> mokėjimo užklausą „PioneerHub Testnet Payment Lab“. Test-Pi neturi piniginės vertės. Tai nėra Mainnet mokėjimas.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Pirma prisijunk per Pi Browser</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div><p class="note">PioneerHub niekada neprašo wallet passphrase, seed frazės ar privataus rakto. Jei Pi Browser nėra arba Testnet konfigūracija nepasiekiama, įrankis aiškiai nieko nevykdo.</p>`;
+  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab.</h2><p><strong>LIVE:</strong> Pi Browser Testnet autentifikacija, serverio patikra ir mokėjimo flow. Portal konfigūracija jau užbaigta; jei runtime patikra nepraeina, parodomas tik saugus diagnostinis kodas.</p></div><div class="status-strip"><span class="state live">LIVE: Testnet-only Payment Lab</span><span class="state ready">READY: server verification ir duplicate protection</span><span class="state ready">RUNTIME CHECK: Pi Browser ir Testnet paskyros būsena</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Prisijunk tik per Pi Browser</h3><p>Nėra el. pašto, slaptažodžio ar wallet importo. Tokenas tikrinamas per serverinį <code>/me</code>; passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Prisijungti prie Testnet Lab</button><p id="piAuthStatus" class="note" aria-live="polite">Iki patikrinto prisijungimo mokėjimo mygtukas neveikia.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Vienas aiškus Test-Pi bandymas</h3><p>Po patikrinto prisijungimo gali pats sukurti <strong>0.01 Test-Pi</strong> užklausą. Test-Pi neturi piniginės vertės.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Pirma prisijunk per Pi Browser</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div>`;
   const auth = lab.querySelector('#piAuth');
   const authStatus = lab.querySelector('#piAuthStatus');
   const payment = lab.querySelector('#piPayment');
@@ -382,21 +382,23 @@ function bindLab() {
 
   auth.addEventListener('click', async () => {
     auth.disabled = true;
-    authStatus.textContent = 'Įkeliame Pi SDK ir tikriname Testnet prisijungimą…';
+    let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Įkeliame Pi SDK ir tikriname Testnet prisijungimą…';
     track('pi_auth_start');
     try {
       pi = await loadPiSdk();
-      await pi.init({ version: '2.0' });
+      stage = 'AUTH-SDK-INIT'; await pi.init({ version: '2.0' });
+      stage = 'AUTH-PI-REJECTED';
       const result = await pi.authenticate(['payments'], incompletePayment);
-      const verified = await request('/api/pi/auth', { accessToken: result.accessToken });
+      stage = 'AUTH-ME-VERIFY'; const verified = await request('/api/pi/auth', { accessToken: result.accessToken });
+      stage = 'AUTH-SESSION';
       authorization = verified.authorization;
       authStatus.textContent = 'Testnet prisijungimas patikrintas serveryje. Pi username ir tokenas PioneerHub UI nerodomi.';
       payment.disabled = false;
       payment.removeAttribute('aria-disabled');
       payment.textContent = 'Sukurti 0.01 Test-Pi mokėjimą';
       track('pi_auth_complete');
-    } catch {
-      authStatus.textContent = 'Prisijungimo nepavyko patvirtinti. Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.';
+    } catch (error) {
+      authStatus.textContent = `Prisijungimo nepavyko patvirtinti (${error.message || stage}). Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.`;
       auth.disabled = false;
     }
   });
