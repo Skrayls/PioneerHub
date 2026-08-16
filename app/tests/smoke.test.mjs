@@ -4,10 +4,11 @@ import worker from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
 const [html, js, css] = await Promise.all(['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')));
-assert.match(html, /PioneerHub yra nepriklausomas projektas/);
-assert.match(html, /niekam neduok wallet passphrase/i);
+assert.match(html, /PioneerHub nėra Pi Network/);
+assert.match(html, /30 sekundžių patikra/i);
+assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
-assert.match(js, /Testnet scenarijus/);
+assert.match(js, /passphrase/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.match(css, /@media/);
 

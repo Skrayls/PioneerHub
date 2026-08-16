@@ -1,65 +1,9 @@
-<!doctype html>
-<html lang="lt">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="PioneerHub Lithuania: nepriklausoma Pi ekosistemos mokymosi, saugumo ir programėlių atradimo platforma." />
-    <title>PioneerHub Lithuania — praktiškai apie Pi</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="PioneerHub pradžia">Pioneer<span>Hub</span></a>
-      <nav aria-label="Pagrindinė navigacija">
-        <a href="#learn">Mokykis</a><a href="#safety">Sauga</a><a href="#radar">App Radar</a><a href="#lab">Payment Lab</a>
-      </nav>
-    </header>
-    <main id="top">
-      <section class="hero">
-        <p class="eyebrow">LIETUVA · NEPRIKLAUSOMA BENDRUOMENĖ</p>
-        <h1>Mažiau triukšmo.<br><em>Daugiau praktikos.</em></h1>
-        <p class="lede">Aiškūs lietuviški gidai, saugumo informacija ir skaidrus Pi programėlių atradimas — be kainos pažadų ir be spaudimo.</p>
-        <div class="actions"><a class="button primary" href="#learn">Pradėti saugiai</a><a class="button quiet" href="#safety">Patikrinti saugumą</a></div>
-        <p class="disclaimer">PioneerHub yra nepriklausomas projektas. Jis nėra Pi Network ir nėra jo remiamas ar patvirtintas.</p>
-      </section>
-
-      <section id="learn" class="section">
-        <div class="section-intro"><p class="eyebrow">LEARN</p><h2>Nuo klausimo iki aiškaus veiksmo.</h2><p>Trumpi gidai kuriami pagal oficialius šaltinius. Svarbiausia saugumo informacija visada bus nemokama.</p></div>
-        <div class="cards" id="learnCards"></div>
-      </section>
-
-      <section id="safety" class="section safety">
-        <div class="section-intro"><p class="eyebrow">SAFETY CENTER</p><h2>Yra dalykų, kurių niekada nedarai.</h2></div>
-        <ol class="safety-list">
-          <li><strong>Niekam neduok wallet passphrase.</strong> Nei „support“, nei administratorius, nei programa jos neturi prašyti.</li>
-          <li><strong>Nespausk nuorodų iš DM.</strong> Į Pi paslaugas eik tik per oficialią programą arba pats įvedęs adresą.</li>
-          <li><strong>Nespręsk pagal pažadus.</strong> Garantuota Pi grąža, „atrakinsime balansą“ ar prašymas siųsti Pi — raudona vėliava.</li>
-          <li><strong>KYC lieka oficialioje Pi aplinkoje.</strong> PioneerHub nerenka dokumentų, selfie ar KYC duomenų.</li>
-        </ol>
-        <a class="text-link" href="https://minepi.com/safety" rel="noreferrer" target="_blank">Oficialus Pi saugumo centras ↗</a>
-      </section>
-
-      <section id="radar" class="section">
-        <div class="section-intro"><p class="eyebrow">APP RADAR</p><h2>Programėlės vertinamos pagal naudą, ne pagal triukšmą.</h2><p>Pradinis modelis — aiškus ir viešas. Rėmimas niekada nekeičia vertinimo.</p></div>
-        <div class="radar-grid">
-          <article><span class="status recommended">Rekomenduojama</span><h3>Reali, stabili ir aiški nauda</h3><p>Naudinga kasdieniam veiksmui, skaidriai paaiškina duomenis bei mokėjimus.</p></article>
-          <article><span class="status try">Verta išbandyti</span><h3>Gera idėja, reikia stebėti</h3><p>Yra realus naudojimo atvejis, bet trūksta stabilumo, aiškumo arba istorijos.</p></article>
-          <article><span class="status caution">Atsargiai</span><h3>Rizika ar neatsakyti klausimai</h3><p>Nevartok, kol neaiškūs privatumo, mokėjimo, veikimo ar kūrėjo skaidrumo klausimai.</p></article>
-        </div>
-        <p class="note">Pirmi individualūs app review bus skelbiami tik po dokumentuoto testavimo. „Sponsored“ vieta bus aiškiai pažymėta.</p>
-      </section>
-
-      <section id="lab" class="section lab">
-        <div class="section-intro"><p class="eyebrow">PAYMENT LAB · TESTNET</p><h2>Suprask mokėjimą prieš darydamas tikrą.</h2><p>Šis modulis dar nerenka Pi ir neprisijungia prie wallet. Jis tik parodo saugų principą.</p></div>
-        <div class="steps"><div><b>01</b><span>Programėlė aiškiai nurodo, ką gausi ir kiek kainuoja.</span></div><div><b>02</b><span>Oficiali wallet sąsaja paprašo tavo patvirtinimo.</span></div><div><b>03</b><span>Tu pats patikrini sumą ir gavėją prieš patvirtindamas.</span></div><div><b>04</b><span>Operacija patvirtinama tinkle; ji nėra „anuliuojama support'o“.</span></div></div>
-        <button class="button primary" id="labButton" type="button">Peržiūrėti Testnet scenarijų</button><p id="labResult" class="lab-result" role="status"></p>
-      </section>
-
-      <section class="section community">
-        <p class="eyebrow">COMMUNITY</p><h2>Bendruomenė augs per naudingumą.</h2><p>Viešas kanalas ir prisijungimo kelias bus paskelbti tik su aiškiomis taisyklėmis, moderavimo procesu ir privatumo informacija.</p>
-      </section>
-    </main>
-    <footer><span>PioneerHub Lithuania</span><span>Nepriklausomas edukacinis ir utility projektas</span></footer>
-    <script src="app.js"></script>
-  </body>
-</html>
+<!doctype html><html lang="lt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="PioneerHub: aiškūs lietuviški Pi gidai, saugumo patikra ir skaidrus programėlių atradimas."><meta property="og:title" content="PioneerHub — praktiškai apie Pi"><meta property="og:description" content="Mokykis saugiai. Patikrink prieš veikdamas."><meta property="og:type" content="website"><link rel="canonical" href="https://pioneerhub.andriussimonaitis.workers.dev/"><meta name="theme-color" content="#103e32"><title>PioneerHub — praktiškai apie Pi</title><link rel="stylesheet" href="styles.css"></head><body>
+<header><a class="brand" href="#home">Pioneer<span>Hub</span></a><nav><a href="#learn">Mokykis</a><a href="#safety">Sauga</a><a href="#radar">App Radar</a><a href="#community">Bendruomenė</a></nav></header>
+<main id="home"><section class="hero"><p class="eyebrow">NEPRIKLAUSOMAS LIETUVIŠKAS GIDAS</p><h1>Prieš spausdamas<br><i>— suprask.</i></h1><p>Aiškūs Pi paaiškinimai, 30 sekundžių saugumo patikra ir skaidrus programėlių atradimas. Be kainų pažadų. Be prašymų duoti passphrase.</p><div class="actions"><a class="button" href="#safety">30 s saugumo patikra</a><a class="link" href="#learn">Rasti atsakymą →</a></div><small>PioneerHub nėra Pi Network ir nėra jo remiamas ar patvirtintas.</small></section>
+<section class="quick"><a href="#learn"><b>18</b><span>trumpų gidų<br>pradžiai</span></a><a href="#safety"><b>30 s</b><span>patikra prieš<br>siunčiant Pi</span></a><a href="#radar"><b>0</b><span>mokamų<br>reitingų</span></a></section>
+<section id="learn" class="section"><div class="intro"><p class="eyebrow">LEARN V1</p><h2>Rask atsakymą, ne triukšmą.</h2><p>Temos sugrupuotos pagal veiksmą. Kintama informacija tikrinama pagal oficialius Pi šaltinius.</p><input id="search" type="search" placeholder="Ieškoti: KYC, wallet, balansas…" aria-label="Ieškoti gidų"></div><div id="learnCards" class="cards"></div><p class="source">Peržiūrėta: 2026-08-16 · Šaltiniai: <a href="https://minepi.com/safety" target="_blank" rel="noreferrer">Pi Safety</a>, <a href="https://minepi.com/developers/" target="_blank" rel="noreferrer">Pi Developers</a>, <a href="https://minepi.com/roadmap/" target="_blank" rel="noreferrer">Pi Roadmap</a>.</p></section>
+<section id="safety" class="section dark"><div class="intro"><p class="eyebrow">SAFETY CENTER</p><h2>30 sekundžių patikra prieš siunčiant Pi.</h2><p>Jei bent į vieną atsakymas „nežinau“ arba „ne“ — sustok. Jokio Pi nepervesk.</p></div><div id="checklist" class="checklist"></div><p id="safetyResult" class="result" aria-live="polite"></p><details><summary>Dažniausios raudonos vėliavos</summary><p>Passphrase prašymas, „support“ žinutė, nuoroda iš DM, netikra KYC forma, garantuota grąža, spaudimas veikti dabar arba neaiškus gavėjas.</p></details></section>
+<section id="radar" class="section"><div class="intro"><p class="eyebrow">APP RADAR</p><h2>Nauda vertinama, ne perkama.</h2><p>Šis v1 katalogas skelbia tik redakcinį modelį ir oficialius Pi įėjimo taškus; individualūs trečiųjų šalių reitingai pasirodys tik po dokumentuoto saugaus testavimo.</p></div><div class="radar"><article><span>OFICIALUS ĮĖJIMAS</span><h3>Pi Browser</h3><p>Pi Platform programėlių aplinka. Naudok tik oficialią programą ir tikrink adresą prieš prisijungdamas.</p><a href="https://minepi.com/developers/" target="_blank" rel="noreferrer">Oficialus šaltinis ↗</a></article><article><span>OFICIALUS ĮĖJIMAS</span><h3>Pi Wallet</h3><p>Wallet yra Pi Browser aplinkoje. PioneerHub niekada neprašo tavo passphrase ar privataus rakto.</p><a href="https://minepi.com/blog/pi-wallet-safety/" target="_blank" rel="noreferrer">Wallet sauga ↗</a></article><article><span>REVIEW METODAS</span><h3>Kaip vertinsime appsus</h3><p>Nauda · UX · sauga · Pi integracija · aktyvumas. Rėmimas niekada nekeičia balo.</p><a href="#community">Pasiūlyti appą →</a></article></div></section>
+<section class="section lab"><p class="eyebrow">PAYMENT LAB · TESTNET</p><h2>Mokėk suprasti flow, ne spėlioti.</h2><p>Testnet mokėjimo modulis bus aktyvuotas tik su Pi Developer Portal Testnet konfigūracija. Jokių Mainnet mokėjimų ir jokių wallet duomenų šiame puslapyje nėra.</p><ol><li>Programėlė aiškiai nurodo naudą ir sumą.</li><li>Pi Wallet pateikia patvirtinimą.</li><li>Serveris patikrina mokėjimo būseną prieš suteikdamas naudą.</li></ol></section>
+<section id="community" class="section community"><p class="eyebrow">PRISIDĖK</p><h2>Padėk padaryti ekosistemą saugesnę.</h2><div class="cards compact"><a href="mailto:hello@pioneerhub.lt?subject=Scam%20report"><b>Pranešti apie scam</b><span>Nesiųsk passphrase ar dokumentų.</span></a><a href="mailto:hello@pioneerhub.lt?subject=App%20suggestion"><b>Pasiūlyti appą</b><span>Įvertinsime pagal viešą metodą.</span></a><a href="mailto:hello@pioneerhub.lt?subject=Guide%20idea"><b>Pasiūlyti gidą</b><span>Ką paaiškinti toliau?</span></a></div></section></main><footer>PioneerHub Lithuania · Saugumas ir esminiai gidai visada nemokami.</footer><script src="app.js"></script></body></html>

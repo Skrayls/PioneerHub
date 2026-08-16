@@ -1,14 +1,3 @@
-const topics = [
-  ["01", "Pradžia", "Ką Pi programa daro ir ko ji nežada."],
-  ["02", "Wallet sauga", "Passphrase, oficialūs keliai ir phishing signalai."],
-  ["03", "KYC ir Mainnet", "Ką reiškia patvirtinimas bei migracija."],
-  ["04", "Balansas", "Unverified, transferable ir migrated nėra tas pats."],
-  ["05", "Lockup", "Boost nėra priežastis prarasti likvidumą."],
-  ["06", "Mokėjimai", "Kaip perskaityti prašymą prieš jį patvirtinant."],
-  ["07", "Programėlės", "Kaip įvertinti naudą, saugą ir skaidrumą."],
-  ["08", "Node ir kūrimas", "Kada verta prisidėti techniškai."],
-];
-document.querySelector('#learnCards').innerHTML = topics.map(([number, title, text]) => `<article><span class="number">${number}</span><h3>${title}</h3><p>${text}</p></article>`).join('');
-document.querySelector('#labButton').addEventListener('click', () => {
-  document.querySelector('#labResult').textContent = 'Testnet scenarijus: pirmiausia įvertini siūlomą naudą, tada tik oficialioje Pi sąsajoje tikrini gavėją ir sumą. PioneerHub niekada neprašo tavo passphrase.';
-});
+const topics=[['Pi Network','Kas tai yra ir ko jis nežada.','Pradžia'],['Balance Dashboard','Kaip skaityti balansų būsenas.','Balansas'],['Migrated Balance','Kas jau perkelta į Mainnet.','Balansas'],['Transferable Balance','Kodėl tai yra įvertis, ne pažadas.','Balansas'],['Unverified Balance','Ką gali reikšti nepatvirtinta dalis.','Balansas'],['Mainnet','Ką keičia migracija.','Mainnet'],['Pi Wallet','Kur saugiai jį atidaryti.','Wallet'],['Wallet passphrase','Vienas dalykas, kurio niekam neduodi.','Sauga'],['KYC','Kodėl naudok tik oficialią aplinką.','KYC'],['Mainnet Checklist','Ką pasitikrinti ramiai.','Mainnet'],['Lockup','Ką reiškia ribotas prieinamumas.','Balansas'],['Referral Team','Ką reiškia komandos struktūra.','Paskyra'],['Security Circle','Kaip veikia socialinio pasitikėjimo dalis.','Paskyra'],['KYC Validator','Atsakomybė ir privatumas.','KYC'],['Node','Kam skirtas techninis dalyvavimas.','Technika'],['Pi pavedimas','Gavėjas, suma ir galutinis patvirtinimas.','Mokėjimai'],['Pi Browser ir appsai','Kaip pradėti saugiai.','Appsai'],['Dažni scamai','Signalai, dėl kurių reikia sustoti.','Sauga']];
+const cards=document.querySelector('#learnCards');function render(q=''){cards.innerHTML=topics.filter(t=>t.join(' ').toLowerCase().includes(q.toLowerCase())).map(([t,d,c])=>`<article><span>${c}</span><h3>${t}</h3><p>${d}</p><button data-topic="${t}">Skaityti santrauką</button></article>`).join('');cards.querySelectorAll('button').forEach(b=>b.onclick=()=>alert(`${b.dataset.topic}: šis trumpas gidas bus plečiamas tik iš oficialių šaltinių. Pirmas veiksmas: neskubėk ir nesidalink wallet passphrase.`));}render();document.querySelector('#search').oninput=e=>render(e.target.value);
+const checks=['Ar tikrai žinau gavėją?','Ar adresą gavau patikimu kanalu?','Ar niekas neprašė passphrase ar „KYC mokesčio“?','Ar nėra garantuotos grąžos ar spaudimo skubėti?','Ar prieš patvirtinimą patikrinau sumą ir paskirtį?','Ar appas/adresas yra oficialus ar mano patikrintas?'];const list=document.querySelector('#checklist');list.innerHTML=checks.map((c,i)=>`<label><input type="checkbox" data-check="${i}"><span>${c}</span></label>`).join('');list.onchange=()=>{const n=list.querySelectorAll(':checked').length;document.querySelector('#safetyResult').textContent=n===checks.length?'Gerai: viską patikrinai. Vis tiek perskaityk patvirtinimą prieš siųsdamas.':`Patikrinta ${n}/${checks.length}. Sustok, kol neatsakai į visus klausimus.`;};
