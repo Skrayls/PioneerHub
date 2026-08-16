@@ -22,7 +22,8 @@
 
 ## In progress now
 
-- `feature/app-radar-test-records` prepares Pi Auth and Testnet Payment Lab readiness UI, source-backed boundary documents, and the first paid-utility and standalone-app decisions on top of the verified App Radar records.
+- `feature/pi-scam-shield-mvp` adds the free, browser-only Pi Scam Shield MVP with fixed risk signals and no wallet or personal-data input.
+- Pi Auth and Testnet Payment Lab remain prepared only to their documented Developer Portal boundaries.
 - Pi Auth architecture is being prepared up to the Pi Developer Portal boundary only.
 - Payment Lab is being expanded as Testnet-only educational flow and implementation plan; no Mainnet payments.
 - First paid Pi utility and first standalone PioneerHub app selection are being narrowed from scored candidate sets.

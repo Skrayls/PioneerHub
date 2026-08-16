@@ -15,6 +15,7 @@ Objective: become the most useful independent Lithuanian Pi learning, safety and
 
 ### Shipping next
 
+- [ ] Release Pi Scam Shield MVP: free fixed-signal check, no wallet or personal-data input, and no payment flow.
 - [x] Publish first PioneerHub-tested App Radar records with dated limitations and no fabricated verdicts.
 - [ ] Add Pi Auth readiness section to the live product with explicit disabled boundary.
 - [ ] Add Testnet Payment Lab educational walkthrough with event tracking and no real payments.

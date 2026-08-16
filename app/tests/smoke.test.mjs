@@ -6,6 +6,9 @@ const root = new URL('../', import.meta.url);
 const [html, js, css] = await Promise.all(['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')));
 assert.match(html, /PioneerHub nėra Pi Network/);
 assert.match(html, /30 sekundžių patikra/i);
+assert.match(html, /PI SCAM SHIELD · NEMOKAMAS/);
+assert.match(html, /PioneerHub nieko neišsaugo/);
+assert.match(html, /wallet passphrase, seed frazės arba privataus rakto/);
 assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
 assert.match(html, /LIVE/);
@@ -16,10 +19,13 @@ assert.match(html, /Testnet mokėjimas dar nevykdomas/);
 assert.match(html, /ne aktyvus mokejimas/);
 assert.match(js, /passphrase/);
 assert.match(js, /learn_article_open/);
+assert.match(js, /scam_shield_start/);
+assert.match(js, /scam_shield_complete/);
 assert.match(js, /PIONEERHUB TESTED/);
 assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
+assert.doesNotMatch(html, /textarea|type="text"/i);
 assert.doesNotMatch(js, /Pi\.authenticate\s*\(/);
 assert.doesNotMatch(js, /createPayment\s*\(/);
 assert.match(css, /@media/);
@@ -39,3 +45,9 @@ assert.equal((await health.json()).status, 'ok');
 
 const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(event.status, 204);
+
+const shieldEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+assert.equal(shieldEvent.status, 204);
+
+const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+assert.equal(arbitraryEvent.status, 204);

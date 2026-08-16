@@ -15,6 +15,8 @@
 - `learn_article_open`
 - `safety_check_start`
 - `safety_check_complete`
+- `scam_shield_start`
+- `scam_shield_complete`
 - `app_radar_view`
 - `app_open_external`
 - `report_scam`

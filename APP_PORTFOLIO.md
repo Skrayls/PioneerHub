@@ -33,3 +33,7 @@ Why it wins:
 - no need for early Mainnet activation,
 - naturally feeds Safety Center and App Radar,
 - can later support paid advanced verification without paywalling essential safety guidance.
+
+## MVP boundary
+
+The first MVP is a free browser-only signal check. It accepts only fixed risk-signal selections, stores nothing locally or remotely, and gives a practical stop/check-next response. It does not inspect wallets, URLs, messages, passphrases, screenshots, identities or transactions, and it does not claim to detect every scam.

@@ -28,6 +28,12 @@ const checks = [
   'Ar appas arba adresas yra oficialus ar mano patikrintas?',
 ];
 
+const shieldAdvice = {
+  critical: ['STOP: matomi kritiniai scam signalai.', 'Nieko nevesk ir nieko nesiųsk. Passphrase, seed frazės ar privataus rakto neprašo nei saugi piniginė, nei teisėtas support. Uždaryk gautą nuorodą ir oficialų Pi puslapį atsidaryk pats.'],
+  high: ['SUSTOK IR PATIKRINK: rizika didelė.', 'Nespausk gautos nuorodos ir nepervesk Pi. Patikrink adresą iš oficialaus Pi šaltinio, o ne iš žinutės. Garantijos, spaudimas ir apsimetinėjimas nėra patikimumo įrodymai.'],
+  caution: ['Dar nėra pakankamai duomenų pasitikėti.', 'Nepažymėtas signalas nėra saugumo patvirtinimas. Patikrink gavėją, sumą, paskirtį ir oficialų domeną savarankiškai prieš bet kokį veiksmą.'],
+};
+
 const integrationSources = [
   {
     title: 'Pi access token verification',
@@ -263,6 +269,34 @@ function renderSafety() {
   });
 }
 
+function bindScamShield() {
+  const form = document.querySelector('#shieldForm');
+  const result = document.querySelector('#shieldResult');
+  let started = false;
+
+  form?.addEventListener('change', () => {
+    if (!started) {
+      started = true;
+      track('scam_shield_start');
+    }
+  });
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const signals = new Set(new FormData(form).getAll('signal'));
+    const level = signals.has('passphrase') || signals.has('payment') ? 'critical' : signals.size > 0 ? 'high' : 'caution';
+    const [title, body] = shieldAdvice[level];
+    result.className = `shield-result ${level}`;
+    result.innerHTML = `<strong>${title}</strong><p>${body}</p><a class="text-link" href="https://minepi.com/safety/" target="_blank" rel="noreferrer">Atidaryti Pi Safety šaltinį ↗</a>`;
+    result.hidden = false;
+    track('scam_shield_complete');
+  });
+  form?.addEventListener('reset', () => {
+    started = false;
+    result.hidden = true;
+    result.textContent = '';
+  });
+}
+
 function renderRadar() {
   const root = document.querySelector('#radar .radar');
 
@@ -344,6 +378,7 @@ document.querySelector('#learnCards').addEventListener('click', (event) => {
   if (event.target.matches('button')) track('learn_article_open');
 });
 renderSafety();
+bindScamShield();
 renderRadar();
 bindLab();
 bindCommunity();
