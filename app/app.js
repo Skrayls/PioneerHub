@@ -378,12 +378,8 @@ function bindLab() {
   }
 
   auth.addEventListener('click', async () => {
-    if (!window.Pi) {
-      authStatus.textContent = 'Pi SDK pasiekiamas tik Pi Browser. Joks prisijungimas nebuvo pradėtas.';
-      return;
-    }
     auth.disabled = true;
-    authStatus.textContent = 'Tikriname Pi Browser Testnet prisijungimą…';
+    authStatus.textContent = 'Įkeliame Pi SDK ir tikriname Testnet prisijungimą…';
     track('pi_auth_start');
     try {
       pi = await loadPiSdk();
