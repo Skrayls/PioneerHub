@@ -4,7 +4,7 @@
 
 | Idea | Problem | Pi role | MVP effort | Revenue potential | Risk | Score |
 | --- | --- | --- | --- | --- | --- | --- |
-| Pi scam shield | Pioneers need quick scam checks before acting | Trust anchor, future paid advanced checks | Low | Medium | Low | 9 |
+| PioneerHub Scam Shield | Pioneers need quick scam checks before acting | Trust anchor, future paid advanced checks | Low | Medium | Low | 9 |
 | Pi app launch checklist | Builders need a compliant launch checklist | Pi-native app workflow | Low | Medium | Low | 8 |
 | Pi transfer rehearsal | Users fear making the first transfer | Testnet education | Medium | Medium | Low | 8 |
 | App Radar notifier | Users want tested-app updates | Ecosystem discovery | Medium | Medium | Low | 8 |
@@ -17,13 +17,13 @@
 
 ## Top 3
 
-1. **Pi scam shield**
+1. **PioneerHub Scam Shield**
 2. **Pi transfer rehearsal**
 3. **App Radar notifier**
 
 ## Recommended first standalone app
 
-**Pi scam shield**
+**PioneerHub Scam Shield**
 
 Why it wins:
 

@@ -11,7 +11,7 @@ Prepared to the exact Developer Portal boundary. Pi login is **not active** on t
 - The frontend must pass the access token to the backend and the backend must verify it through Pi's `/me` API before treating a user as authenticated.
 - The access token is dynamic and should not be used as a persistent identifier.
 
-Sources reviewed on 2026-08-16:
+Sources rechecked on 2026-08-16:
 
 - `https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/`
 - `https://pi-apps.github.io/community-developer-guide/docs/importantTopics/accessToken/`

@@ -1,4 +1,4 @@
-# Pi Scam Shield MVP
+# PioneerHub Scam Shield MVP
 
 ## Purpose
 

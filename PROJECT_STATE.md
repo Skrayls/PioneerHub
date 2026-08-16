@@ -22,7 +22,7 @@
 
 ## In progress now
 
-- `feature/pi-scam-shield-mvp` adds the free, browser-only Pi Scam Shield MVP with fixed risk signals and no wallet or personal-data input.
+- `feature/referral-brand-refinement` adds the optional BlackMerchanter referral path, independent visual refinement, and the Testnet-only Developer Portal gate runbook.
 - Pi Auth and Testnet Payment Lab remain prepared only to their documented Developer Portal boundaries.
 - Pi Auth architecture is being prepared up to the Pi Developer Portal boundary only.
 - Payment Lab is being expanded as Testnet-only educational flow and implementation plan; no Mainnet payments.

@@ -26,7 +26,7 @@ Objective: become the most useful independent Lithuanian Pi learning, safety and
 - [ ] Create a Pi-adjacent, independent PioneerHub visual system: about 70% distinct PioneerHub identity and 30% restrained Pi-ecosystem cues.
 - [ ] Use accessible violet for primary interactive states, restrained amber for secondary emphasis, and green only for safety/success semantics.
 - [ ] Recheck current official Pi trademark/brand requirements before implementation. Do not imitate Pi branding, logo, layouts or imply endorsement.
-- [ ] Add an optional, secondary community/referral disclosure for founder Pi username `BlackMerchanter` and `https://minepi.com/BlackMerchanter`.
+- [ ] Release an optional, secondary community/referral disclosure for founder Pi username `BlackMerchanter` and `https://minepi.com/BlackMerchanter`.
 - [ ] Keep referral below utility content with independent-project disclosure; no recruitment pressure, earnings claims, team transfers, paid promotion or referral marketplace.
 
 ### Pi integration boundary
