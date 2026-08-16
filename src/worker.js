@@ -8,9 +8,8 @@ const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-  "X-Frame-Options": "DENY",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; style-src 'self'; script-src 'self' https://sdk.minepi.com; connect-src 'self' https://api.minepi.com https://sdk.minepi.com; object-src 'none'; upgrade-insecure-requests",
+  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://pinet.com https://*.pinet.com https://minepi.com https://*.minepi.com; img-src 'self' data:; style-src 'self'; script-src 'self' https://sdk.minepi.com; connect-src 'self' https://api.minepi.com https://sdk.minepi.com; object-src 'none'; upgrade-insecure-requests",
 };
 
 const json = (body, status = 200, headers = {}) => Response.json(body, {
@@ -28,20 +27,24 @@ async function sign(value, secret) {
   return base64url(await crypto.subtle.sign("HMAC", key, encode(value)));
 }
 
-async function sessionFor(uid, secret) {
-  const payload = base64url(encode(JSON.stringify({ uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS })));
-  return `${payload}.${await sign(payload, secret)}`;
+async function authorization(secret) { return base64url(crypto.getRandomValues(new Uint8Array(32))); }
+async function sessionKey(token, secret) { return sign(token, secret); }
+async function readSession(request, env) {
+  const token = request.headers.get("Authorization")?.match(/^Bearer ([A-Za-z0-9_-]{32,128})$/)?.[1];
+  if (!token || !env.PI_SESSION_SECRET || !env.AUTH_SESSIONS) return null;
+  const stub = env.AUTH_SESSIONS.get(env.AUTH_SESSIONS.idFromName(await sessionKey(token, env.PI_SESSION_SECRET)));
+  const response = await stub.fetch("https://session.internal/");
+  return response.ok ? response.json() : null;
 }
 
-async function readSession(request, secret) {
-  const token = request.headers.get("Cookie")?.match(/(?:^|;\s*)ph_pi_session=([^;]+)/)?.[1];
-  if (!token || !secret) return null;
-  const [payload, signature] = token.split(".");
-  if (!payload || !signature || signature !== await sign(payload, secret)) return null;
-  try {
-    const data = JSON.parse(new TextDecoder().decode(bytes(payload)));
-    return typeof data.uid === "string" && data.uid && data.exp > Math.floor(Date.now() / 1000) ? data : null;
-  } catch { return null; }
+export class AuthSession {
+  constructor(state) { this.state = state; }
+  async fetch(request) {
+    if (request.method === "POST") { await this.state.storage.put("session", await request.json()); return new Response(null, { status: 204 }); }
+    const session = await this.state.storage.get("session");
+    if (!session || session.exp <= Math.floor(Date.now() / 1000)) { await this.state.storage.delete("session"); return new Response(null, { status: 401 }); }
+    return Response.json({ uid: session.uid });
+  }
 }
 
 async function piUser(accessToken) {
@@ -111,20 +114,23 @@ export default { async fetch(request, env) {
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }
   if (url.pathname === "/healthz") return json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV, release: env.RELEASE_ID || "unmarked" });
-  if (url.pathname === "/api/pi/status") return json({ network: env.PI_NETWORK === "testnet" ? "testnet" : "unavailable", auth: env.PI_TESTNET_API_KEY && env.PI_SESSION_SECRET ? "ready" : "configuration_required", payments: env.PI_TESTNET_API_KEY && env.PAYMENT_LEDGER ? "ready" : "configuration_required" });
+  if (url.pathname === "/api/pi/status") return json({ network: env.PI_NETWORK === "testnet" ? "testnet" : "unavailable", auth: env.PI_TESTNET_API_KEY && env.PI_SESSION_SECRET && env.AUTH_SESSIONS ? "ready" : "configuration_required", payments: env.PI_TESTNET_API_KEY && env.PAYMENT_LEDGER ? "ready" : "configuration_required" });
   if (url.pathname === "/api/pi/auth" && request.method === "POST") {
     if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET) return json({ error: "testnet_configuration_required" }, 503);
     const data = await readJson(request);
     if (!data || typeof data.accessToken !== "string" || data.accessToken.length < 12 || data.accessToken.length > 4096) return json({ error: "invalid_auth_request" }, 400);
     const uid = await piUser(data.accessToken);
     if (!uid) return json({ error: "authentication_failed" }, 401);
-    return json({ authenticated: true, expiresIn: SESSION_TTL_SECONDS }, 200, { "Set-Cookie": `ph_pi_session=${await sessionFor(uid, env.PI_SESSION_SECRET)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_SECONDS}` });
+    const token = await authorization(env.PI_SESSION_SECRET);
+    const stub = env.AUTH_SESSIONS.get(env.AUTH_SESSIONS.idFromName(await sessionKey(token, env.PI_SESSION_SECRET)));
+    await stub.fetch("https://session.internal/", { method: "POST", body: JSON.stringify({ uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }) });
+    return json({ authenticated: true, authorization: token, expiresIn: SESSION_TTL_SECONDS });
   }
-  if (url.pathname === "/api/pi/logout" && request.method === "POST") return json({ loggedOut: true }, 200, { "Set-Cookie": "ph_pi_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0" });
+  if (url.pathname === "/api/pi/logout" && request.method === "POST") return json({ loggedOut: true });
   const paymentRoute = url.pathname.match(/^\/api\/pi\/payments\/([A-Za-z0-9_-]{1,160})\/(approve|complete)$/);
   if (paymentRoute && request.method === "POST") {
     if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER) return json({ error: "testnet_configuration_required" }, 503);
-    const session = await readSession(request, env.PI_SESSION_SECRET);
+    const session = await readSession(request, env);
     if (!session) return json({ error: "authentication_required" }, 401);
     const data = await readJson(request);
     const result = await paymentRequest(env, paymentRoute[1], paymentRoute[2], session.uid, data?.txid);
@@ -133,7 +139,7 @@ export default { async fetch(request, env) {
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
   const response = await env.ASSETS.fetch(request);
   const headers = new Headers(response.headers);
-  Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value));
+  Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
   headers.set("Cache-Control", response.status === 200 && url.pathname.match(/\.(?:css|js|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

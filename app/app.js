@@ -342,8 +342,10 @@ function renderRadar() {
   });
 }
 
-async function request(path, body) {
-  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body || {}) });
+async function request(path, body, authorization) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (authorization) headers.Authorization = `Bearer ${authorization}`;
+  const response = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body || {}) });
   if (!response.ok) throw new Error('request_failed');
   return response.json();
 }
@@ -369,12 +371,13 @@ function bindLab() {
   const payment = lab.querySelector('#piPayment');
   const paymentStatus = lab.querySelector('#piPaymentStatus');
   let pi;
+  let authorization;
 
   async function incompletePayment(paymentRecord) {
     const id = paymentRecord?.identifier;
     const txid = paymentRecord?.transaction?.txid;
     if (!id || !txid) return;
-    try { await request(`/api/pi/payments/${encodeURIComponent(id)}/complete`, { txid }); } catch { /* The SDK shows its own retry path. */ }
+    try { await request(`/api/pi/payments/${encodeURIComponent(id)}/complete`, { txid }, authorization); } catch { /* The SDK shows its own retry path. */ }
   }
 
   auth.addEventListener('click', async () => {
@@ -385,7 +388,8 @@ function bindLab() {
       pi = await loadPiSdk();
       await pi.init({ version: '2.0' });
       const result = await pi.authenticate(['payments'], incompletePayment);
-      await request('/api/pi/auth', { accessToken: result.accessToken });
+      const verified = await request('/api/pi/auth', { accessToken: result.accessToken });
+      authorization = verified.authorization;
       authStatus.textContent = 'Testnet prisijungimas patikrintas serveryje. Pi username ir tokenas PioneerHub UI nerodomi.';
       payment.disabled = false;
       payment.removeAttribute('aria-disabled');
@@ -404,9 +408,9 @@ function bindLab() {
     track('testnet_payment_start');
     try {
       await pi.createPayment({ amount: 0.01, memo: 'PioneerHub Testnet Payment Lab', metadata: { purpose: 'testnet_payment_lab' } }, {
-        onReadyForServerApproval: async (paymentId) => { await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/approve`); },
+        onReadyForServerApproval: async (paymentId) => { await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/approve`, {}, authorization); },
         onReadyForServerCompletion: async (paymentId, txid) => {
-          await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/complete`, { txid });
+          await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/complete`, { txid }, authorization);
           paymentStatus.textContent = 'Testnet mokėjimas užbaigtas serveryje. Test-Pi neturi piniginės vertės.';
           track('testnet_payment_complete');
         },

@@ -46,8 +46,9 @@ const response = await worker.fetch(new Request('https://example.test/app.js'), 
   ASSETS: { fetch: async () => new Response('ok', { status: 200, headers: { 'content-type': 'application/javascript' } }) },
 });
 assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
-assert.equal(response.headers.get('x-frame-options'), 'DENY');
 assert.match(response.headers.get('content-security-policy'), /default-src 'self'/);
+assert.match(response.headers.get('content-security-policy'), /https:\/\/\*\.pinet\.com/);
+assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'public, max-age=86400');
 
@@ -80,7 +81,7 @@ assert.equal(referralEvent.status, 204);
 const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(arbitraryEvent.status, 204);
 
-const piStatus = await worker.fetch(new Request('https://example.test/api/pi/status'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {} });
+const piStatus = await worker.fetch(new Request('https://example.test/api/pi/status'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {} });
 assert.deepEqual(await piStatus.json(), { network: 'testnet', auth: 'ready', payments: 'ready' });
 
 const malformedAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret' });
