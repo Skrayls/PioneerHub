@@ -9,9 +9,12 @@ async function get(path) {
   return response;
 }
 
-const home = await get('/');
+const home = await get('/?build=testnet-cache-r2');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
-assert.match(await home.text(), /PioneerHub/);
+const homeHtml = await home.text();
+assert.match(homeHtml, /PioneerHub/);
+assert.match(homeHtml, /Build: testnet-cache-r2/);
+assert.match(homeHtml, /app\.js\?v=testnet-cache-r2/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
@@ -19,16 +22,18 @@ for (const [header, pattern] of Object.entries({
   'permissions-policy': /camera=\(\)/,
 })) assert.match(home.headers.get(header) || '', pattern, `${header} missing or invalid`);
 assert.equal(home.headers.get('x-frame-options'), null, 'app pages must rely on the narrow Pi-compatible CSP frame-ancestors policy');
+assert.match(home.headers.get('cache-control') || '', /no-store/, 'HTML shell must not remain cached');
 
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
 assert.equal((await health.json()).status, 'ok');
-const css = await get('/styles.css');
+const css = await get('/styles.css?v=testnet-cache-r2');
 assert.equal(css.status, 200, 'CSS must return HTTP 200');
-assert.match(css.headers.get('cache-control') || '', /max-age=86400/);
-const js = await get('/app.js');
+assert.match(css.headers.get('cache-control') || '', /immutable/);
+const js = await get('/app.js?v=testnet-cache-r2');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
-assert.match(js.headers.get('cache-control') || '', /no-cache/, 'JS must revalidate so Pi Browser receives current auth diagnostics');
+assert.match(await js.text(), /FRONTEND-RUNTIME: ACTIVE/);
+assert.match(js.headers.get('cache-control') || '', /immutable/);
 const missing = await get('/not-found-pioneerhub');
 assert.equal(missing.status, 404, 'unknown route must return HTTP 404');
 console.log(`Production smoke passed: ${base}`);
