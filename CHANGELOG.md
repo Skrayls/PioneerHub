@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 — Pi Scam Shield MVP branch checkpoint
+
+- Added a free fixed-signal scam check with critical, high and caution outcomes.
+- Kept the tool browser-only: no wallet, passphrase, personal data, free-form report or payment input is accepted.
+- Added allowlisted MUA events for tool start and completion only.
+
 ## 2026-08-16 — Pi integration readiness branch checkpoint
 
 - Added live-product Pi Auth readiness and Testnet Payment Lab walkthrough sections with explicit disabled boundaries.
