@@ -1,5 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "832c724c6353404b1c27d11db226d704",
   "name": "pioneerhub",
   "main": "src/worker.js",
   "compatibility_date": "2026-08-15",

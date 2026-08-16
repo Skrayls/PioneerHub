@@ -13,7 +13,7 @@
     "build": "npm run lint && npm run typecheck && npm run secrets:scan && npm test",
     "dev": "wrangler dev",
     "deploy:staging": "wrangler deploy --env staging",
-    "validate:worker": "wrangler deploy --dry-run --env=\"\""
+    "validate:worker": "node scripts/validate-worker.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.123.0"
