@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-16 — Testnet domain-validation delivery branch checkpoint
+
+- Hardened the secret-backed Portal validation response: exact plain-text body, no cache, no sniffing, no referrer and no frame embedding.
+- The Portal-issued content remains local/secret-managed and is never stored in Git.
+
 ## 2026-08-16 — Referral, brand and Portal-gate branch checkpoint
 
 - Added an optional BlackMerchanter invitation path below community utility content, without earnings claims or recruitment pressure.

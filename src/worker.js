@@ -15,7 +15,15 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) {
     return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, {
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "X-Frame-Options": "DENY",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+      },
     });
   }
   const response = await env.ASSETS.fetch(request);

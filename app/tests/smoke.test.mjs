@@ -57,6 +57,11 @@ const validationFile = await worker.fetch(new Request('https://example.test/vali
 assert.equal(validationFile.status, 200);
 assert.equal(await validationFile.text(), 'portal-issued-proof');
 assert.equal(validationFile.headers.get('cache-control'), 'no-store');
+assert.equal(validationFile.headers.get('content-type'), 'text/plain; charset=utf-8');
+assert.equal(validationFile.headers.get('x-content-type-options'), 'nosniff');
+assert.equal(validationFile.headers.get('referrer-policy'), 'no-referrer');
+assert.equal(validationFile.headers.get('x-frame-options'), 'DENY');
+assert.match(validationFile.headers.get('content-security-policy'), /default-src 'none'/);
 
 const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(event.status, 204);
