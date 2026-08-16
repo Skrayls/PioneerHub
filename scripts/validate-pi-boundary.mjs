@@ -8,13 +8,15 @@ const [config, html, app, localVars] = await Promise.all([
   readFile(new URL('../.dev.vars.example', import.meta.url), 'utf8'),
 ]);
 
-assert.match(config, /"PI_NETWORK": "disabled"/);
 assert.match(config, /"PI_NETWORK": "testnet"/);
-assert.match(html, /Pi loginas nėra aktyvus/);
-assert.match(html, /Testnet mokėjimas dar nevykdomas/);
-assert.doesNotMatch(app, /Pi\.authenticate\s*\(/);
-assert.doesNotMatch(app, /createPayment\s*\(/);
+assert.match(config, /"PI_NETWORK": "testnet"/);
+assert.match(app, /pi\.authenticate\(\['payments'\]/);
+assert.match(app, /pi\.createPayment\(/);
+assert.match(app, /amount: 0\.01/);
+assert.doesNotMatch(app, /sandbox:\s*true/);
+assert.doesNotMatch(config, /mainnet/i);
 assert.match(localVars, /PI_TESTNET_API_KEY=/);
+assert.match(localVars, /PI_SESSION_SECRET=/);
 assert.match(localVars, /PI_DOMAIN_VALIDATION_CONTENT=/);
 assert.doesNotMatch(localVars, /MAINNET_API_KEY/);
 console.log('Pi integration boundary validation passed.');

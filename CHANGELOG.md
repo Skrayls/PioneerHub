@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 — Testnet Pi Auth and Payment Lab delivery branch checkpoint
+
+- Added explicit Pi Browser Testnet authentication with server-side `/me` verification and a short-lived HttpOnly PioneerHub session.
+- Added a 0.01 Test-Pi User-to-App flow with server approval, completion and Durable Object idempotency protection.
+- Kept API credentials in Cloudflare Worker secrets only; no Mainnet mode, wallet import or passphrase input exists.
+
 ## 2026-08-16 — Testnet domain-validation delivery branch checkpoint
 
 - Hardened the secret-backed Portal validation response: exact plain-text body, no cache, no sniffing, no referrer and no frame embedding.

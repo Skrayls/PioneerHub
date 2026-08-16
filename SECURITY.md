@@ -12,6 +12,10 @@
 
 GitHub is source only: no Cloudflare or Pi secret belongs in source, Actions secrets, issues, logs or documentation. Production and staging secrets are separate Cloudflare runtime bindings; local values exist only in ignored `.dev.vars`. A leaked secret is compromised: rotate it, assess exposure, remove history if required and document the incident.
 
+## Testnet integration boundary
+
+The Testnet server credential is available only to the Worker for Pi platform calls. The browser receives no server credential and sends an SDK access token only to `/api/pi/auth`; the Worker verifies it through Pi `/me` before issuing a ten-minute HttpOnly session. Payment approval and completion are serialized per payment identifier in a Durable Object. The Worker does not log access tokens, Pi usernames, payment identifiers, transaction identifiers or credentials.
+
 ## Analytics privacy boundary
 
 PioneerHub MUA telemetry accepts only predefined event names. It rejects arbitrary payload values by omission, and never intentionally logs Pi credentials, passphrases, wallet addresses, usernames, email, session material, user agent or free-form submissions.

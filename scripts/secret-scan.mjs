@@ -7,7 +7,8 @@ const files = execFileSync('git', ['ls-files', '-co', '--exclude-standard'], { e
 const patterns = [
   { name: 'private key', re: /-----BEGIN (?:[A-Z ]+)?PRIVATE KEY-----/ },
   { name: 'GitHub token', re: /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/ },
-  { name: 'high-entropy credential assignment', re: /\b(?:api[_-]?key|secret|token|password)\b\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i },
+  // Detect literal credentials while permitting normal runtime reads such as request headers.
+  { name: 'high-entropy credential assignment', re: /\b(?:api[_-]?key|secret|token|password)\b\s*[:=]\s*(?:["'][A-Za-z0-9_./+=-]{16,}["']|(?!(?:env|process|request|context|input)\b)[A-Za-z0-9_+=/-]{16,})/i },
 ];
 const findings = [];
 for (const file of files) {
@@ -20,4 +21,3 @@ if (findings.length) {
   process.exit(1);
 }
 console.log(`Secret scan passed (${files.length} tracked/unignored files checked).`);
-
