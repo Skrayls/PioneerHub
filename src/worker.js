@@ -61,25 +61,25 @@ async function paymentRequest(env, paymentId, action, uid, txid) {
   const response = await stub.fetch("https://payment.internal/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, paymentId, uid, txid, credential: env.PI_TESTNET_API_KEY }),
+    body: JSON.stringify({ action, paymentId, uid, txid }),
   });
   return { status: response.status, body: await response.json() };
 }
 
 export class PaymentLedger {
-  constructor(state) { this.state = state; }
+  constructor(state, env) { this.state = state; this.env = env; }
 
   async fetch(request) {
     const input = await request.json();
-    const { action, paymentId, uid, txid, credential } = input || {};
-    if (!credential || !PAYMENT_ID.test(paymentId) || typeof uid !== "string") return json({ error: "invalid_request" }, 400);
+    const { action, paymentId, uid, txid } = input || {};
+    if (!this.env.PI_TESTNET_API_KEY || !PAYMENT_ID.test(paymentId) || typeof uid !== "string") return json({ error: "invalid_request" }, 400);
     return this.state.blockConcurrencyWhile(async () => {
       const stored = await this.state.storage.get("payment");
       if (stored && stored.uid !== uid) return json({ error: "payment_owner_mismatch" }, 403);
       if (action === "approve") {
         if (stored?.status === "approved" || stored?.status === "completed") return json({ state: stored.status, idempotent: true });
         const remote = await fetch(`${PI_API}/payments/${encodeURIComponent(paymentId)}/approve`, {
-          method: "POST", headers: { Authorization: `Key ${credential}` },
+          method: "POST", headers: { Authorization: `Key ${this.env.PI_TESTNET_API_KEY}` },
         });
         if (!remote.ok) return json({ error: "approval_unavailable" }, 502);
         const payment = { uid, status: "approved", paymentId };
@@ -91,7 +91,7 @@ export class PaymentLedger {
         if (stored?.status === "completed" && stored.txid === txid) return json({ state: "completed", idempotent: true });
         if (!stored || stored.status !== "approved") return json({ error: "payment_not_approved" }, 409);
         const remote = await fetch(`${PI_API}/payments/${encodeURIComponent(paymentId)}/complete`, {
-          method: "POST", headers: { Authorization: `Key ${credential}`, "Content-Type": "application/json" }, body: JSON.stringify({ txid }),
+          method: "POST", headers: { Authorization: `Key ${this.env.PI_TESTNET_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ txid }),
         });
         if (!remote.ok) return json({ error: "completion_unavailable" }, 502);
         await this.state.storage.put("payment", { ...stored, status: "completed", txid });

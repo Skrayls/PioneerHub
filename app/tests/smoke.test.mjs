@@ -91,11 +91,11 @@ const state = {
   storage: { get: async key => records.get(key), put: async (key, value) => records.set(key, value) },
   blockConcurrencyWhile: async callback => callback(),
 };
-const ledger = new PaymentLedger(state);
+const ledger = new PaymentLedger(state, { PI_TESTNET_API_KEY: 'test-credential' });
 const nativeFetch = globalThis.fetch;
 let piCalls = 0;
 globalThis.fetch = async () => { piCalls += 1; return new Response('{}', { status: 200 }); };
-const paymentInput = (action, txid) => new Request('https://payment.internal/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, paymentId: 'payment_123', uid: 'user_123', txid, credential: 'test-credential' }) });
+const paymentInput = (action, txid) => new Request('https://payment.internal/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, paymentId: 'payment_123', uid: 'user_123', txid }) });
 assert.equal((await ledger.fetch(paymentInput('approve'))).status, 200);
 assert.equal((await ledger.fetch(paymentInput('approve'))).status, 200);
 assert.equal(piCalls, 1);

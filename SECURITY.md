@@ -14,7 +14,7 @@ GitHub is source only: no Cloudflare or Pi secret belongs in source, Actions sec
 
 ## Testnet integration boundary
 
-The Testnet server credential is available only to the Worker for Pi platform calls. The browser receives no server credential and sends an SDK access token only to `/api/pi/auth`; the Worker verifies it through Pi `/me` before issuing a ten-minute HttpOnly session. Payment approval and completion are serialized per payment identifier in a Durable Object. The Worker does not log access tokens, Pi usernames, payment identifiers, transaction identifiers or credentials.
+The Testnet server credential is available only to the Worker and its Durable Object environment for Pi platform calls; it is not serialized into browser or internal request bodies. The browser sends an SDK access token only to `/api/pi/auth`; the Worker verifies it through Pi `/me` before issuing a ten-minute HttpOnly session. Payment approval and completion are serialized per payment identifier in a Durable Object. The Worker does not log access tokens, Pi usernames, payment identifiers, transaction identifiers or credentials.
 
 ## Analytics privacy boundary
 
