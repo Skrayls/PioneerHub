@@ -32,6 +32,7 @@ assert.doesNotMatch(html, /textarea|type="text"/i);
 assert.match(js, /pi\.authenticate\(\['payments'\]/);
 assert.match(js, /pi\.createPayment\(/);
 assert.match(js, /amount: 0\.01/);
+assert.match(js, /pi = await loadPiSdk\(\)/);
 assert.match(js, /Test-Pi neturi piniginės vertės/);
 assert.doesNotMatch(js, /sandbox:\s*true/);
 assert.doesNotMatch(js, /passphrase.*fetch|fetch.*passphrase/i);
