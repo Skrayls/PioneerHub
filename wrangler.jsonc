@@ -7,6 +7,6 @@
   "preview_urls": true,
   "assets": { "directory": "./app", "binding": "ASSETS", "run_worker_first": true },
   "observability": { "enabled": true, "head_sampling_rate": 1 },
-  "vars": { "APP_ENV": "production", "PI_NETWORK": "disabled" },
+  "vars": { "APP_ENV": "production", "PI_NETWORK": "disabled", "RELEASE_ID": "2026-08-16-known-good-b" },
   "env": { "staging": { "name": "pioneerhub-staging", "workers_dev": true, "vars": { "APP_ENV": "staging", "PI_NETWORK": "testnet" }, "observability": { "enabled": true, "head_sampling_rate": 1 } } }
 }
