@@ -2,7 +2,7 @@
 
 ## Current status
 
-Prepared to the exact Developer Portal boundary. Pi login is **not active** on the live site.
+Testnet-only implementation is ready for Pi Browser. It uses Pi SDK authentication only after an explicit user action, then verifies the access token server-side through `/me`. The session is an HttpOnly, 10-minute, app-local cookie; raw access tokens and Pi usernames are not stored or returned.
 
 ## Source-backed rules
 
@@ -39,12 +39,6 @@ Do not store:
 - raw access token beyond verification need
 - email or unrelated profile data
 
-## Exact remaining boundary
+## Testnet boundary
 
-Pi Auth can go no further without:
-
-1. a Pi Developer Portal app created in Pi Browser,
-2. verified app domain,
-3. app API key / configuration for the target network.
-
-Until then PioneerHub keeps Pi Auth clearly disabled in product UI.
+Pi Auth is enabled only when the deployed Worker has the Testnet server key and session secret. It remains unavailable outside Pi Browser and never offers email, password or wallet-based login. There is no Mainnet configuration in this project.

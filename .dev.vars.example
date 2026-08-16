@@ -1,4 +1,5 @@
 # Local Worker secrets. Copy to ignored .dev.vars; never commit the copy.
 # Testnet only. Do not add Mainnet credentials here.
 # PI_TESTNET_API_KEY=
+# PI_SESSION_SECRET=
 # PI_DOMAIN_VALIDATION_CONTENT=

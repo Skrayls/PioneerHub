@@ -2,7 +2,7 @@
 
 ## Current status
 
-Prepared as a **Testnet-only** educational flow. No live Pi payment capability is enabled.
+Implemented as a **Testnet-only** Pi Browser flow. A user explicitly creates a 0.01 Test-Pi request; the Worker verifies the Pi session, then approves and completes the payment through Pi's server API. A Durable Object serializes each payment identifier so retries cannot duplicate approval or completion.
 
 ## Source-backed rules
 
@@ -37,13 +37,6 @@ Sources rechecked on 2026-08-16:
 - incomplete payments handled explicitly
 - replay/duplicate protection required
 
-## Exact remaining boundary
+## Testnet execution boundary
 
-Payment Lab can go no further without:
-
-1. Pi Developer Portal Testnet app,
-2. verified domain ownership,
-3. server API key,
-4. Pi Browser / Testnet execution context.
-
-Only after those four items exist should PioneerHub wire real Testnet requests.
+A real test requires Pi Browser with a Testnet-enabled user and Test-Pi. No Mainnet flow, wallet passphrase collection, or wallet import exists. A non-2xx Pi server response is never shown as a completed payment.

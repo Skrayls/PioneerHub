@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import worker from '../../src/worker.js';
+import worker, { PaymentLedger } from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
 const [html, js, css] = await Promise.all(['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')));
@@ -29,8 +29,12 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.doesNotMatch(js, /Pi\.authenticate\s*\(/);
-assert.doesNotMatch(js, /createPayment\s*\(/);
+assert.match(js, /pi\.authenticate\(\['payments'\]/);
+assert.match(js, /pi\.createPayment\(/);
+assert.match(js, /amount: 0\.01/);
+assert.match(js, /Test-Pi neturi piniginės vertės/);
+assert.doesNotMatch(js, /sandbox:\s*true/);
+assert.doesNotMatch(js, /passphrase.*fetch|fetch.*passphrase/i);
 assert.match(css, /@media/);
 
 const brand = await readFile(new URL('brand.css', root), 'utf8');
@@ -74,3 +78,28 @@ assert.equal(referralEvent.status, 204);
 
 const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(arbitraryEvent.status, 204);
+
+const piStatus = await worker.fetch(new Request('https://example.test/api/pi/status'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {} });
+assert.deepEqual(await piStatus.json(), { network: 'testnet', auth: 'ready', payments: 'ready' });
+
+const malformedAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret' });
+assert.equal(malformedAuth.status, 400);
+assert.doesNotMatch(await malformedAuth.text(), /secret|token/i);
+
+const records = new Map();
+const state = {
+  storage: { get: async key => records.get(key), put: async (key, value) => records.set(key, value) },
+  blockConcurrencyWhile: async callback => callback(),
+};
+const ledger = new PaymentLedger(state);
+const nativeFetch = globalThis.fetch;
+let piCalls = 0;
+globalThis.fetch = async () => { piCalls += 1; return new Response('{}', { status: 200 }); };
+const paymentInput = (action, txid) => new Request('https://payment.internal/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, paymentId: 'payment_123', uid: 'user_123', txid, credential: 'test-credential' }) });
+assert.equal((await ledger.fetch(paymentInput('approve'))).status, 200);
+assert.equal((await ledger.fetch(paymentInput('approve'))).status, 200);
+assert.equal(piCalls, 1);
+assert.equal((await ledger.fetch(paymentInput('complete', 'tx_123'))).status, 200);
+assert.equal((await ledger.fetch(paymentInput('complete', 'tx_123'))).status, 200);
+assert.equal(piCalls, 2);
+globalThis.fetch = nativeFetch;

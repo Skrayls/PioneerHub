@@ -342,20 +342,84 @@ function renderRadar() {
   });
 }
 
-function bindLab() {
-  const walkthrough = document.querySelector('#labWalkthrough');
-  const complete = document.querySelector('#labComplete');
-  const flow = document.querySelector('#labFlow');
+async function request(path, body) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body || {}) });
+  if (!response.ok) throw new Error('request_failed');
+  return response.json();
+}
 
-  walkthrough?.addEventListener('click', () => {
-    flow.hidden = false;
-    track('payment_lab_start');
+function loadPiSdk() {
+  if (window.Pi) return Promise.resolve(window.Pi);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://sdk.minepi.com/pi-sdk.js';
+    script.async = true;
+    script.onload = () => window.Pi ? resolve(window.Pi) : reject(new Error('sdk_unavailable'));
+    script.onerror = () => reject(new Error('sdk_unavailable'));
+    document.head.append(script);
+  });
+}
+
+function bindLab() {
+  const lab = document.querySelector('#lab');
+  if (!lab) return;
+  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab: mokėjimo procesas be Mainnet rizikos.</h2><p><strong>LIVE:</strong> saugus Testnet prisijungimo ir mokėjimo flow veikia tik Pi Browser aplinkoje. <strong>READY / PREPARED:</strong> serveris tikrina tokeną ir mokėjimo būsenas. <strong>REQUIRES PI DEVELOPER PORTAL CONFIGURATION:</strong> jei Portal konfigūracija kada nors būtų pakeista, veiksmai lieka užblokuoti.</p></div><div class="status-strip"><span class="state live">LIVE: Testnet-only Payment Lab</span><span class="state ready">READY / PREPARED: server verification ir duplicate protection</span><span class="state blocked">REQUIRES PI DEVELOPER PORTAL CONFIGURATION: be jos joks veiksmas nevyksta</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Prisijunk tik per Pi Browser</h3><p>Nėra el. pašto, slaptažodžio ar wallet importo. Pi SDK tokenas siunčiamas tik serveriniam <code>/me</code> patikrinimui; passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Prisijungti prie Testnet Lab</button><p id="piAuthStatus" class="note" aria-live="polite">Atidaryk PioneerHub per Pi Browser. Iki patikrinto prisijungimo mokėjimo mygtukas neveikia.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Vienas aiškus Test-Pi bandymas</h3><p>Po patikrinto prisijungimo gali pats sukurti <strong>0.01 Test-Pi</strong> mokėjimo užklausą „PioneerHub Testnet Payment Lab“. Test-Pi neturi piniginės vertės. Tai nėra Mainnet mokėjimas.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Pirma prisijunk per Pi Browser</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div><p class="note">PioneerHub niekada neprašo wallet passphrase, seed frazės ar privataus rakto. Jei Pi Browser nėra arba Testnet konfigūracija nepasiekiama, įrankis aiškiai nieko nevykdo.</p>`;
+  const auth = lab.querySelector('#piAuth');
+  const authStatus = lab.querySelector('#piAuthStatus');
+  const payment = lab.querySelector('#piPayment');
+  const paymentStatus = lab.querySelector('#piPaymentStatus');
+  let pi;
+
+  async function incompletePayment(paymentRecord) {
+    const id = paymentRecord?.identifier;
+    const txid = paymentRecord?.transaction?.txid;
+    if (!id || !txid) return;
+    try { await request(`/api/pi/payments/${encodeURIComponent(id)}/complete`, { txid }); } catch { /* The SDK shows its own retry path. */ }
+  }
+
+  auth.addEventListener('click', async () => {
+    if (!window.Pi) {
+      authStatus.textContent = 'Pi SDK pasiekiamas tik Pi Browser. Joks prisijungimas nebuvo pradėtas.';
+      return;
+    }
+    auth.disabled = true;
+    authStatus.textContent = 'Tikriname Pi Browser Testnet prisijungimą…';
+    track('pi_auth_start');
+    try {
+      pi = await loadPiSdk();
+      await pi.init({ version: '2.0' });
+      const result = await pi.authenticate(['payments'], incompletePayment);
+      await request('/api/pi/auth', { accessToken: result.accessToken });
+      authStatus.textContent = 'Testnet prisijungimas patikrintas serveryje. Pi username ir tokenas PioneerHub UI nerodomi.';
+      payment.disabled = false;
+      payment.removeAttribute('aria-disabled');
+      payment.textContent = 'Sukurti 0.01 Test-Pi mokėjimą';
+      track('pi_auth_complete');
+    } catch {
+      authStatus.textContent = 'Prisijungimo nepavyko patvirtinti. Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.';
+      auth.disabled = false;
+    }
   });
 
-  complete?.addEventListener('click', () => {
-    track('payment_lab_complete');
-    complete.textContent = 'Pazymeta kaip suprasta';
-    complete.disabled = true;
+  payment.addEventListener('click', async () => {
+    if (!pi || payment.disabled) return;
+    payment.disabled = true;
+    paymentStatus.textContent = 'Kuriama aiškiai pažymėta Testnet užklausa Pi Browser lange…';
+    track('testnet_payment_start');
+    try {
+      await pi.createPayment({ amount: 0.01, memo: 'PioneerHub Testnet Payment Lab', metadata: { purpose: 'testnet_payment_lab' } }, {
+        onReadyForServerApproval: async (paymentId) => { await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/approve`); },
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/complete`, { txid });
+          paymentStatus.textContent = 'Testnet mokėjimas užbaigtas serveryje. Test-Pi neturi piniginės vertės.';
+          track('testnet_payment_complete');
+        },
+        onCancel: () => { paymentStatus.textContent = 'Testnet mokėjimas atšauktas. Nieko nepervesta Mainnet tinkle.'; },
+        onError: () => { paymentStatus.textContent = 'Testnet mokėjimo nepavyko užbaigti. Nieko nepatvirtinta kaip sėkminga.'; },
+      });
+    } catch {
+      paymentStatus.textContent = 'Testnet mokėjimo užklausa nepavyko. Nieko nepatvirtinta kaip sėkminga.';
+    } finally { payment.disabled = false; }
   });
 }
 

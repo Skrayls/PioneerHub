@@ -22,10 +22,8 @@
 
 ## In progress now
 
-- `feature/referral-brand-refinement` adds the optional BlackMerchanter referral path, independent visual refinement, and the Testnet-only Developer Portal gate runbook.
-- Pi Auth and Testnet Payment Lab remain prepared only to their documented Developer Portal boundaries.
-- Pi Auth architecture is being prepared up to the Pi Developer Portal boundary only.
-- Payment Lab is being expanded as Testnet-only educational flow and implementation plan; no Mainnet payments.
+- `feature/testnet-payment-lab` adds Testnet-only Pi Browser authentication, server `/me` verification, short-lived app sessions and a real Test-Pi payment lifecycle guarded by idempotent Worker state.
+- The domain and Testnet server credential are configured as Worker secrets; credentials remain outside Git and browser code.
 - First paid Pi utility and first standalone PioneerHub app selection are being narrowed from scored candidate sets.
 
 ## Explicitly open
@@ -36,13 +34,12 @@
 
 ## Current hard boundaries
 
-- No Pi Auth activation before official Pi Developer Portal configuration exists.
-- No real Pi payment capability before explicit Testnet configuration exists.
+- Pi Auth and payments operate only in the configured Testnet Pi Browser context.
 - No Mainnet payment flow, wallet import, passphrase request or user database.
 - Essential safety and learning information remains free.
 
 ## Next executable items
 
-1. Ship Pi Auth and Testnet Payment Lab readiness, with no live credentials or payments.
+1. Validate the Testnet Pi Browser flow after canonical production release.
 2. Publish the selected first paid Pi utility and standalone-app direction.
 3. Extend genuine PioneerHub test records only where safe evidence can be collected.
