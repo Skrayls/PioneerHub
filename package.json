@@ -9,6 +9,7 @@
     "secrets:scan": "node scripts/secret-scan.mjs",
     "test": "node app/tests/smoke.test.mjs",
     "smoke:production": "node scripts/production-smoke.mjs",
+    "verify:app-radar": "node scripts/verify-app-radar.mjs",
     "build": "npm run lint && npm run typecheck && npm run secrets:scan && npm test",
     "dev": "wrangler dev",
     "deploy:staging": "wrangler deploy --env staging",
