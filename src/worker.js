@@ -2,7 +2,7 @@
 export default { async fetch(request, env) {
   const url = new URL(request.url);
   if (url.pathname === "/healthz") {
-    return Response.json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV }, {
+    return Response.json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV, release: env.RELEASE_ID || "unmarked" }, {
       headers: { "Cache-Control": "no-store" },
     });
   }
