@@ -2,7 +2,7 @@
 
 ## Current status
 
-No GitHub CLI/authentication is present in the execution environment, so no remote repository, ruleset or GitHub security switch has been created. This is intentionally not bypassed with an unscoped token.
+The private `Skrayls/PioneerHub` repository is connected to the locally held PioneerHub GitHub App (App ID `4610861`), which is installed for this repository only. Initial audited history was published to `main` on 2026-08-16 using a short-lived installation token; no PAT, user password, SSH key or persistent token was created. The App has no administration permission, so it cannot create rulesets or change owner-only repository/security settings.
 
 ## Required repository configuration after creation
 
