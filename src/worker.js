@@ -142,7 +142,7 @@ export default { async fetch(request, env) {
   const response = await env.ASSETS.fetch(request);
   const headers = new Headers(response.headers);
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
-  headers.set("Cache-Control", response.status === 200 && url.pathname.match(/\.(?:css|js|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
+  headers.set("Cache-Control", response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 } };

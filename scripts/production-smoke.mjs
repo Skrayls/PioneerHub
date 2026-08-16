@@ -13,12 +13,12 @@ const home = await get('/');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
 assert.match(await home.text(), /PioneerHub/);
 for (const [header, pattern] of Object.entries({
-  'content-security-policy': /frame-ancestors 'none'/,
+  'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
   'referrer-policy': /strict-origin-when-cross-origin/,
   'permissions-policy': /camera=\(\)/,
-  'x-frame-options': /DENY/,
 })) assert.match(home.headers.get(header) || '', pattern, `${header} missing or invalid`);
+assert.equal(home.headers.get('x-frame-options'), null, 'app pages must rely on the narrow Pi-compatible CSP frame-ancestors policy');
 
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
@@ -28,6 +28,7 @@ assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /max-age=86400/);
 const js = await get('/app.js');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
+assert.match(js.headers.get('cache-control') || '', /no-cache/, 'JS must revalidate so Pi Browser receives current auth diagnostics');
 const missing = await get('/not-found-pioneerhub');
 assert.equal(missing.status, 404, 'unknown route must return HTTP 404');
 console.log(`Production smoke passed: ${base}`);
