@@ -48,10 +48,12 @@ export class AuthSession {
 }
 
 async function piUser(accessToken) {
-  const response = await fetch(`${PI_API}/me`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) return null;
-  const result = await response.json();
-  return typeof result?.user?.uid === "string" ? result.user.uid : null;
+  try {
+    const response = await fetch(`${PI_API}/me`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!response.ok) return { code: "AUTH-ME-VERIFY" };
+    const result = await response.json();
+    return typeof result?.user?.uid === "string" ? { uid: result.user.uid } : { code: "AUTH-ME-VERIFY" };
+  } catch { return { code: "AUTH-NETWORK" }; }
 }
 
 async function readJson(request) {
@@ -116,14 +118,14 @@ export default { async fetch(request, env) {
   if (url.pathname === "/healthz") return json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV, release: env.RELEASE_ID || "unmarked" });
   if (url.pathname === "/api/pi/status") return json({ network: env.PI_NETWORK === "testnet" ? "testnet" : "unavailable", auth: env.PI_TESTNET_API_KEY && env.PI_SESSION_SECRET && env.AUTH_SESSIONS ? "ready" : "configuration_required", payments: env.PI_TESTNET_API_KEY && env.PAYMENT_LEDGER ? "ready" : "configuration_required" });
   if (url.pathname === "/api/pi/auth" && request.method === "POST") {
-    if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET) return json({ error: "testnet_configuration_required" }, 503);
+    if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.AUTH_SESSIONS) return json({ code: "AUTH-SESSION" }, 503);
     const data = await readJson(request);
-    if (!data || typeof data.accessToken !== "string" || data.accessToken.length < 12 || data.accessToken.length > 4096) return json({ error: "invalid_auth_request" }, 400);
-    const uid = await piUser(data.accessToken);
-    if (!uid) return json({ error: "authentication_failed" }, 401);
+    if (!data || typeof data.accessToken !== "string" || data.accessToken.length < 12 || data.accessToken.length > 4096) return json({ code: "AUTH-NETWORK" }, 400);
+    const identity = await piUser(data.accessToken);
+    if (!identity.uid) return json({ code: identity.code }, 401);
     const token = await authorization(env.PI_SESSION_SECRET);
     const stub = env.AUTH_SESSIONS.get(env.AUTH_SESSIONS.idFromName(await sessionKey(token, env.PI_SESSION_SECRET)));
-    await stub.fetch("https://session.internal/", { method: "POST", body: JSON.stringify({ uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }) });
+    await stub.fetch("https://session.internal/", { method: "POST", body: JSON.stringify({ uid: identity.uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }) });
     return json({ authenticated: true, authorization: token, expiresIn: SESSION_TTL_SECONDS });
   }
   if (url.pathname === "/api/pi/logout" && request.method === "POST") return json({ loggedOut: true });
