@@ -10,6 +10,9 @@ assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
 assert.match(js, /passphrase/);
 assert.match(js, /learn_article_open/);
+assert.match(js, /PIONEERHUB TESTED/);
+assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
+assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.match(css, /@media/);
 
