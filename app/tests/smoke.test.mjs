@@ -4,11 +4,14 @@ import worker from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
 const [html, js, css] = await Promise.all(['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')));
-assert.match(html, /PioneerHub nėra Pi Network/);
+assert.match(html, /PioneerHub nėra Pi Network™/);
 assert.match(html, /30 sekundžių patikra/i);
-assert.match(html, /PI SCAM SHIELD · NEMOKAMAS/);
+assert.match(html, /PIONEERHUB SCAM SHIELD · NEMOKAMAS/);
 assert.match(html, /PioneerHub nieko neišsaugo/);
 assert.match(html, /wallet passphrase, seed frazės arba privataus rakto/);
+assert.match(html, /BlackMerchanter/);
+assert.match(html, /Jei jau turi pakvietusį žmogų, rinkis jį/);
+assert.match(html, /data-event="referral_open"/);
 assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
 assert.match(html, /LIVE/);
@@ -30,6 +33,10 @@ assert.doesNotMatch(js, /Pi\.authenticate\s*\(/);
 assert.doesNotMatch(js, /createPayment\s*\(/);
 assert.match(css, /@media/);
 
+const brand = await readFile(new URL('brand.css', root), 'utf8');
+assert.match(brand, /#2946a3/);
+assert.match(brand, /@media/);
+
 const response = await worker.fetch(new Request('https://example.test/app.js'), {
   ASSETS: { fetch: async () => new Response('ok', { status: 200, headers: { 'content-type': 'application/javascript' } }) },
 });
@@ -43,11 +50,22 @@ const health = await worker.fetch(new Request('https://example.test/healthz'), {
 assert.equal(health.status, 200);
 assert.equal((await health.json()).status, 'ok');
 
+const validationFile = await worker.fetch(new Request('https://example.test/validation-key.txt'), {
+  ASSETS: { fetch: async () => new Response('unreachable') },
+  PI_DOMAIN_VALIDATION_CONTENT: 'portal-issued-proof',
+});
+assert.equal(validationFile.status, 200);
+assert.equal(await validationFile.text(), 'portal-issued-proof');
+assert.equal(validationFile.headers.get('cache-control'), 'no-store');
+
 const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(event.status, 204);
 
 const shieldEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(shieldEvent.status, 204);
+
+const referralEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'referral_open' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+assert.equal(referralEvent.status, 204);
 
 const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(arbitraryEvent.status, 204);

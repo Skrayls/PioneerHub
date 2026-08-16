@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-16 — Referral, brand and Portal-gate branch checkpoint
+
+- Added an optional BlackMerchanter invitation path below community utility content, without earnings claims or recruitment pressure.
+- Refined the visual system with PioneerHub-owned ink blue, coral and safety green rather than Pi Network's colour palette.
+- Added Testnet-only Portal domain-validation readiness and a consolidated Founder runbook; no Pi credentials, Auth or payment requests are enabled.
+
 ## 2026-08-16 — Pi Scam Shield MVP branch checkpoint
 
 - Added a free fixed-signal scam check with critical, high and caution outcomes.

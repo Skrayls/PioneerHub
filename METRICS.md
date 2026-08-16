@@ -22,6 +22,7 @@
 - `report_scam`
 - `suggest_app`
 - `community_cta`
+- `referral_open`
 - `payment_lab_start`
 - `payment_lab_complete`
 

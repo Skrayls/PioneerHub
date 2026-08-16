@@ -301,6 +301,7 @@ function renderRadar() {
   const root = document.querySelector('#radar .radar');
 
   root.innerHTML = radarEntries.map((entry) => {
+    const testClass = entry.testState === 'PIONEERHUB TESTED' ? 'tested' : 'not-tested';
     const steps = entry.steps ? `
       <div class="test-record">
         <p><strong>Test record:</strong> ${entry.lastChecked}</p>
@@ -313,8 +314,8 @@ function renderRadar() {
     return `
       <article>
         <div class="badges">
-          <span class="badge">${entry.type}</span>
-          <span class="badge">${entry.testState}</span>
+          <span class="badge resource">${entry.type}</span>
+          <span class="badge ${testClass}">${entry.testState}</span>
         </div>
         <h3>${entry.name}</h3>
         <p>${entry.summary}</p>
@@ -361,7 +362,9 @@ function bindLab() {
 function bindCommunity() {
   document.querySelectorAll('#community a').forEach((anchor) => {
     anchor.addEventListener('click', () => {
-      if (anchor.href.includes('Scam')) {
+      if (anchor.dataset.event) {
+        track(anchor.dataset.event);
+      } else if (anchor.href.includes('Scam')) {
         track('report_scam');
       } else if (anchor.href.includes('App')) {
         track('suggest_app');

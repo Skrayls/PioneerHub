@@ -11,7 +11,7 @@ Prepared as a **Testnet-only** educational flow. No live Pi payment capability i
 - Testnet onboarding starts in the Pi Developer Portal, where the developer creates a Testnet app, verifies domain ownership and gets an API key.
 - The Pi payment flow requires frontend callbacks plus backend approval/completion logic.
 
-Sources reviewed on 2026-08-16:
+Sources rechecked on 2026-08-16:
 
 - `https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/quickStart/`
 - `https://pi-apps.github.io/community-developer-guide/docs/importantTopics/paymentFlow/piPaymentFlow/`
