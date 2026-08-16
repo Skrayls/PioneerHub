@@ -1,22 +1,47 @@
 # Project state
 
-**Updated:** 2026-08-15
-**Stage:** 0.5 — Infrastructure, GitHub & Cloudflare Foundation
+**Updated:** 2026-08-16
+**Stage:** 1 — Trust & Utility
 **Status:** active
 
-## Completed this checkpoint
+## Live on production
 
-- Created isolated Git repository and persistent operating-document set.
-- Selected provisional independent brand: **PioneerHub Lithuania**.
-- Completed initial official Pi policy and EU regulatory screening.
-- Defined MVP, architecture, safety/privacy baseline, analytics events and Stage 1 plan.
-- Built a static, mobile-first Core prototype with Learn, Safety Center, App Radar and Payment Lab (Testnet-only education).
-- Added Cloudflare Workers + Static Assets architecture, environment separation, edge security headers, CI, Dependabot, local/CI secret scanning, threat model and recovery documentation.
+- Canonical production URL: `https://pioneerhub.andriussimonaitis.workers.dev`
+- Stage 0.5 infrastructure foundation is accepted done.
+- Stage 1 Core is live with mobile-first Home, Learn, Safety Center, App Radar baseline, community entry points and Testnet-only Payment Lab framing.
+- Analytics telemetry emission is production-ready through allowlisted Worker events.
 
-## Current constraint
+## Verified release checkpoints
 
-The private founder-owned GitHub repository is connected and the scoped PioneerHub GitHub App is installed. GitHub Free private-repository protected branches/rulesets are documented as NOT AVAILABLE with compensating controls. The App intentionally has no administration permission, so owner-only repository settings remain outside this automation boundary. No Cloudflare authentication, domain, public social/community channel, Pi Developer Portal credentials, production hosting, or analytics account has been authorized/provided. Prototype is local only.
+- `15917c7585e7c0a96305104f65309927655764a5`
+  Analytics/MUA release live. `POST /events` accepts only allowlisted event names and discards arbitrary payload fields.
+- `ff2a645974ac3d74d6c621e1dc761eff67ba4ed9`
+  App Radar V1 baseline verified live with seven clearly labeled official/ecosystem resources and no unsupported PioneerHub scores, verdicts or safety guarantees.
+- `8188f61624a63428e68ab14bb36e37b2d6d7a02f`
+  First dated PioneerHub App Radar test records verified live. The records distinguish completed safe checks from explicitly untested steps.
 
-## Next executable item
+## In progress now
 
-Confirm any owner-only repository settings desired by the founder, then connect Cloudflare Workers Builds and deploy the staging Worker.
+- `feature/app-radar-test-records` prepares Pi Auth and Testnet Payment Lab readiness UI, source-backed boundary documents, and the first paid-utility and standalone-app decisions on top of the verified App Radar records.
+- Pi Auth architecture is being prepared up to the Pi Developer Portal boundary only.
+- Payment Lab is being expanded as Testnet-only educational flow and implementation plan; no Mainnet payments.
+- First paid Pi utility and first standalone PioneerHub app selection are being narrowed from scored candidate sets.
+
+## Explicitly open
+
+- Telemetry emission/privacy boundary: PASS.
+- Persisted/queryable analytics visibility inside Cloudflare Observability: OPEN.
+  Telemetry emission is production-ready; end-to-end persisted analytics visibility is not yet independently proven.
+
+## Current hard boundaries
+
+- No Pi Auth activation before official Pi Developer Portal configuration exists.
+- No real Pi payment capability before explicit Testnet configuration exists.
+- No Mainnet payment flow, wallet import, passphrase request or user database.
+- Essential safety and learning information remains free.
+
+## Next executable items
+
+1. Ship Pi Auth and Testnet Payment Lab readiness, with no live credentials or payments.
+2. Publish the selected first paid Pi utility and standalone-app direction.
+3. Extend genuine PioneerHub test records only where safe evidence can be collected.

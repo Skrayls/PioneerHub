@@ -28,6 +28,25 @@ const checks = [
   'Ar appas arba adresas yra oficialus ar mano patikrintas?',
 ];
 
+const integrationSources = [
+  {
+    title: 'Pi access token verification',
+    url: 'https://pi-apps.github.io/community-developer-guide/docs/importantTopics/accessToken/',
+  },
+  {
+    title: 'Pi SDK authentication basics',
+    url: 'https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/',
+  },
+  {
+    title: 'Pi payment flow',
+    url: 'https://pi-apps.github.io/community-developer-guide/docs/importantTopics/paymentFlow/piPaymentFlow/',
+  },
+  {
+    title: 'Developer Portal checklist',
+    url: 'https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/quickStart/',
+  },
+];
+
 const radarEntries = [
   {
     name: 'Pi Browser',
@@ -288,6 +307,23 @@ function renderRadar() {
   });
 }
 
+function bindLab() {
+  const walkthrough = document.querySelector('#labWalkthrough');
+  const complete = document.querySelector('#labComplete');
+  const flow = document.querySelector('#labFlow');
+
+  walkthrough?.addEventListener('click', () => {
+    flow.hidden = false;
+    track('payment_lab_start');
+  });
+
+  complete?.addEventListener('click', () => {
+    track('payment_lab_complete');
+    complete.textContent = 'Pazymeta kaip suprasta';
+    complete.disabled = true;
+  });
+}
+
 function bindCommunity() {
   document.querySelectorAll('#community a').forEach((anchor) => {
     anchor.addEventListener('click', () => {
@@ -309,4 +345,9 @@ document.querySelector('#learnCards').addEventListener('click', (event) => {
 });
 renderSafety();
 renderRadar();
+bindLab();
 bindCommunity();
+
+document.querySelectorAll('#lab a').forEach((anchor) => {
+  anchor.addEventListener('click', () => track('community_cta'));
+});
