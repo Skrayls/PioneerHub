@@ -1,6 +1,7 @@
-const FRONTEND_BUILD = 'auth-sdk-await-r6';
+const FRONTEND_BUILD = 'auth-sdk-click-init-r7';
 // Basic identity verification must work before requesting optional Pi capabilities.
 const AUTH_SCOPES = [];
+let piInitPromise = null;
 
 const topics = [
   ['Pi Network', 'Kas tai yra ir ko jis nezada.', 'Pradzia'],
@@ -382,6 +383,17 @@ function classifyPiInitError(error) {
   return 'AUTH-SDK-INIT-UNKNOWN';
 }
 
+function getPiReady() {
+  if (!piInitPromise) {
+    piInitPromise = (async () => {
+      if (!window.Pi) throw new Error('AUTH-SDK-LOAD');
+      await window.Pi.init({ version: '2.0' });
+      return window.Pi;
+    })();
+  }
+  return piInitPromise;
+}
+
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
@@ -408,8 +420,7 @@ function bindLab() {
     track('pi_auth_start');
     try {
       stage = 'AUTH-SDK-INIT';
-      if (!window.__pioneerHubPiReady) throw new Error('AUTH-SDK-INIT-NO-BRIDGE');
-      pi = await window.__pioneerHubPiReady;
+      pi = await getPiReady();
       stage = 'AUTH-PI-REJECTED';
       const result = await pi.authenticate(AUTH_SCOPES, incompletePayment);
       if (!result || typeof result.accessToken !== 'string' || !result.accessToken || !result.user || typeof result.user.uid !== 'string' || !result.user.uid) throw new Error('AUTH-PI-INVALID-RESULT');
