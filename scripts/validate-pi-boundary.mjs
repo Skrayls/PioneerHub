@@ -10,7 +10,7 @@ const [config, html, app, localVars] = await Promise.all([
 
 assert.match(config, /"PI_NETWORK": "testnet"/);
 assert.match(config, /"PI_NETWORK": "testnet"/);
-assert.match(app, /const AUTH_SCOPES = \[\]/);
+assert.match(app, /const AUTH_SCOPES = \['username'\]/);
 assert.match(app, /pi\.authenticate\(AUTH_SCOPES, incompletePayment\)/);
 assert.match(app, /pi\.createPayment\(/);
 assert.match(app, /amount: 0\.01/);

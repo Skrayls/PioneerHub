@@ -30,7 +30,7 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const AUTH_SCOPES = \[\]/);
+assert.match(js, /const AUTH_SCOPES = \['username'\]/);
 assert.match(js, /pi\.authenticate\(AUTH_SCOPES, incompletePayment\)/);
 assert.match(js, /AUTH-PI-APP-ACCESS/);
 assert.match(js, /AUTH-PI-SCOPE/);
@@ -65,13 +65,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=auth-sdk-click-init-r7'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=auth-username-scope-r8'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=auth-sdk-click-init-r7/);
-assert.match(shellHtml, /app\.js\?v=auth-sdk-click-init-r7/);
-assert.match(shellHtml, /Build: auth-sdk-click-init-r7/);
+assert.match(shellHtml, /styles\.css\?v=auth-username-scope-r8/);
+assert.match(shellHtml, /app\.js\?v=auth-username-scope-r8/);
+assert.match(shellHtml, /Build: auth-username-scope-r8/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 
