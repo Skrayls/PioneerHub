@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'pi-dual-auth-r11';
+const FRONTEND_BUILD = 'pi-auth-settlement-r12';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -394,11 +394,11 @@ function getPiReady() {
   return piInitPromise;
 }
 
-function withTimeout(promise, timeoutMs) {
+function withTimeout(promise, timeoutMs, timeoutCode) {
   let timer;
   return Promise.race([
     promise,
-    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('AUTH-SDK-BRIDGE-TIMEOUT')), timeoutMs); }),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(timeoutCode)), timeoutMs); }),
   ]).finally(() => clearTimeout(timer));
 }
 
@@ -406,8 +406,8 @@ async function getNativePiBridge() {
   const candidate = window.Pi;
   if (!candidate || typeof candidate.init !== 'function' || typeof candidate.authenticate !== 'function' || typeof candidate.nativeFeaturesList !== 'function') return null;
   try {
-    const pi = await withTimeout(getPiReady(), 2000);
-    await withTimeout(pi.nativeFeaturesList(), 2000);
+    const pi = await withTimeout(getPiReady(), 2000, 'AUTH-SDK-BRIDGE-TIMEOUT');
+    await withTimeout(pi.nativeFeaturesList(), 2000, 'AUTH-SDK-BRIDGE-TIMEOUT');
     return pi;
   } catch { return null; }
 }
@@ -472,7 +472,7 @@ function bindLab() {
       track('pi_auth_start');
       stage = 'AUTH-SDK-INIT';
       stage = 'AUTH-PI-REJECTED';
-      const result = await pi.authenticate(NATIVE_PI_AUTH_SCOPES, incompletePayment);
+      const result = await withTimeout(pi.authenticate(NATIVE_PI_AUTH_SCOPES, incompletePayment), 15000, 'AUTH-PI-AUTHENTICATE-TIMEOUT');
       if (!result || typeof result.accessToken !== 'string' || !result.accessToken) throw new Error('AUTH-PI-INVALID-RESULT');
       stage = 'AUTH-ME-VERIFY'; await request('/api/pi/auth', { accessToken: result.accessToken });
       stage = 'AUTH-SESSION';
@@ -481,7 +481,7 @@ function bindLab() {
         : 'Bazinis Testnet prisijungimas patikrintas serveryje. Mokėjimai šiame etape sąmoningai užrakinti.';
       track('pi_auth_complete');
     } catch (error) {
-      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT(?:-(?:NO-BRIDGE|ORIGIN|NETWORK|UNSUPPORTED|REJECTED|UNKNOWN))?|SDK-BRIDGE-TIMEOUT|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
+      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT(?:-(?:NO-BRIDGE|ORIGIN|NETWORK|UNSUPPORTED|REJECTED|UNKNOWN))?|SDK-BRIDGE-TIMEOUT|ME-VERIFY|SESSION|NETWORK|PI-(?:AUTHENTICATE-TIMEOUT|USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
         ? error.message
         : stage === 'AUTH-SDK-INIT' ? classifyPiInitError(error)
           : stage === 'AUTH-PI-REJECTED' ? classifyPiAuthError(error)
