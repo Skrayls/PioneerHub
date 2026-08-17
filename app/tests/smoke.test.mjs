@@ -15,11 +15,12 @@ assert.match(html, /data-event="referral_open"/);
 assert.match(html, /App Radar/);
 assert.match(html, /TESTNET/);
 assert.match(html, /LIVE/);
-assert.match(html, /READY \/ PREPARED/);
-assert.match(html, /REQUIRES PI DEVELOPER PORTAL CONFIGURATION/);
-assert.match(html, /Pi loginas nėra aktyvus/);
-assert.match(html, /Testnet mokėjimas dar nevykdomas/);
-assert.match(html, /ne aktyvus mokejimas/);
+assert.match(html, /READY: serverinis/);
+assert.match(html, /TESTNET INTEGRATION ACTIVE — AUTH TESTING/);
+assert.match(html, /Test-Pi užrakintas/);
+assert.doesNotMatch(html, /REQUIRES PI DEVELOPER PORTAL CONFIGURATION/);
+assert.match(html, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script>/);
+assert.match(html, /Pi\.init\(\{version:'2\.0'\}\)/);
 assert.match(js, /passphrase/);
 assert.match(js, /learn_article_open/);
 assert.match(js, /scam_shield_start/);
@@ -36,7 +37,10 @@ assert.match(js, /AUTH-PI-SCOPE/);
 assert.match(js, /AUTH-PI-INCOMPLETE-PAYMENT/);
 assert.match(js, /pi\.createPayment\(/);
 assert.match(js, /amount: 0\.01/);
-assert.match(js, /pi = await loadPiSdk\(\)/);
+assert.doesNotMatch(js, /function loadPiSdk/);
+assert.match(js, /pi = window\.Pi/);
+assert.match(js, /AUTH-PI-ORIGIN/);
+assert.match(js, /AUTH-PI-SDK-INIT/);
 assert.match(js, /Test-Pi neturi piniginės vertės/);
 assert.doesNotMatch(js, /sandbox:\s*true/);
 assert.doesNotMatch(js, /passphrase.*fetch|fetch.*passphrase/i);
@@ -56,13 +60,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=auth-settlement-r4'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=auth-sdk-head-r5'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=auth-settlement-r4/);
-assert.match(shellHtml, /app\.js\?v=auth-settlement-r4/);
-assert.match(shellHtml, /Build: auth-settlement-r4/);
+assert.match(shellHtml, /styles\.css\?v=auth-sdk-head-r5/);
+assert.match(shellHtml, /app\.js\?v=auth-sdk-head-r5/);
+assert.match(shellHtml, /Build: auth-sdk-head-r5/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 
