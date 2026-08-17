@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'auth-settlement-r4';
+const FRONTEND_BUILD = 'auth-sdk-head-r5';
 // Basic identity verification must work before requesting optional Pi capabilities.
 const AUTH_SCOPES = [];
 
@@ -361,23 +361,15 @@ function classifyPiAuthError(error) {
   if (/whitelist|app.access|access.denied|not.allowed/.test(message)) return 'AUTH-PI-APP-ACCESS';
   if (/scope|permission/.test(message)) return 'AUTH-PI-SCOPE';
   if (/incomplete.payment/.test(message)) return 'AUTH-PI-INCOMPLETE-PAYMENT';
+  if (/not.initiali[sz]ed|call init|initiali[sz]ation/.test(message)) return 'AUTH-PI-SDK-INIT';
+  if (/postmessage|target origin|origin mismatch/.test(message)) return 'AUTH-PI-ORIGIN';
+  if (/callback/.test(message)) return 'AUTH-PI-CALLBACK';
   if (/network|offline|timeout|fetch/.test(message)) return 'AUTH-PI-NETWORK';
+  if (/sdk|minepi|script/.test(message)) return 'AUTH-PI-SDK-ERROR';
   if (error == null) return 'AUTH-PI-EMPTY-RESULT';
   if (error instanceof Error) return 'AUTH-PI-SDK-ERROR';
   if (typeof error === 'object') return 'AUTH-PI-INTERNAL';
   return 'AUTH-PI-UNKNOWN';
-}
-
-function loadPiSdk() {
-  if (window.Pi) return Promise.resolve(window.Pi);
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://sdk.minepi.com/pi-sdk.js';
-    script.async = true;
-    script.onload = () => window.Pi ? resolve(window.Pi) : reject(new Error('sdk_unavailable'));
-    script.onerror = () => reject(new Error('sdk_unavailable'));
-    document.head.append(script);
-  });
 }
 
 function bindLab() {
@@ -402,11 +394,13 @@ function bindLab() {
     if (authInFlight) return;
     authInFlight = true;
     auth.disabled = true;
-    let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Įkeliame Pi SDK ir tikriname Testnet prisijungimą…';
+    let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Tikriname Pi SDK ir Testnet prisijungimą…';
     track('pi_auth_start');
     try {
-      pi = await loadPiSdk();
-      stage = 'AUTH-SDK-INIT'; await pi.init({ version: '2.0' });
+      pi = window.Pi;
+      if (!pi) throw new Error('AUTH-SDK-LOAD');
+      stage = 'AUTH-SDK-INIT';
+      if (window.__pioneerHubPiInitState !== 'ready') throw new Error('AUTH-SDK-INIT');
       stage = 'AUTH-PI-REJECTED';
       const result = await pi.authenticate(AUTH_SCOPES, incompletePayment);
       if (!result || typeof result.accessToken !== 'string' || !result.accessToken || !result.user || typeof result.user.uid !== 'string' || !result.user.uid) throw new Error('AUTH-PI-INVALID-RESULT');
@@ -418,7 +412,7 @@ function bindLab() {
         : 'Bazinis Testnet prisijungimas patikrintas serveryje. Mokėjimai šiame etape sąmoningai užrakinti.';
       track('pi_auth_complete');
     } catch (error) {
-      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
+      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
         ? error.message
         : stage === 'AUTH-PI-REJECTED' ? classifyPiAuthError(error)
           : stage || 'AUTH-UNKNOWN';
