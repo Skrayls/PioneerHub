@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'auth-sdk-head-r5';
+const FRONTEND_BUILD = 'auth-sdk-await-r6';
 // Basic identity verification must work before requesting optional Pi capabilities.
 const AUTH_SCOPES = [];
 
@@ -372,6 +372,16 @@ function classifyPiAuthError(error) {
   return 'AUTH-PI-UNKNOWN';
 }
 
+function classifyPiInitError(error) {
+  const message = typeof error === 'string' ? error.toLowerCase() : typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+  if (/sdk.missing|bridge|pi browser/.test(message)) return 'AUTH-SDK-INIT-NO-BRIDGE';
+  if (/postmessage|target origin|origin mismatch/.test(message)) return 'AUTH-SDK-INIT-ORIGIN';
+  if (/network|offline|timeout|fetch/.test(message)) return 'AUTH-SDK-INIT-NETWORK';
+  if (/unsupported|not supported|version/.test(message)) return 'AUTH-SDK-INIT-UNSUPPORTED';
+  if (error instanceof Error || (error && typeof error === 'object')) return 'AUTH-SDK-INIT-REJECTED';
+  return 'AUTH-SDK-INIT-UNKNOWN';
+}
+
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
@@ -397,10 +407,9 @@ function bindLab() {
     let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Tikriname Pi SDK ir Testnet prisijungimą…';
     track('pi_auth_start');
     try {
-      pi = window.Pi;
-      if (!pi) throw new Error('AUTH-SDK-LOAD');
       stage = 'AUTH-SDK-INIT';
-      if (window.__pioneerHubPiInitState !== 'ready') throw new Error('AUTH-SDK-INIT');
+      if (!window.__pioneerHubPiReady) throw new Error('AUTH-SDK-INIT-NO-BRIDGE');
+      pi = await window.__pioneerHubPiReady;
       stage = 'AUTH-PI-REJECTED';
       const result = await pi.authenticate(AUTH_SCOPES, incompletePayment);
       if (!result || typeof result.accessToken !== 'string' || !result.accessToken || !result.user || typeof result.user.uid !== 'string' || !result.user.uid) throw new Error('AUTH-PI-INVALID-RESULT');
@@ -412,9 +421,10 @@ function bindLab() {
         : 'Bazinis Testnet prisijungimas patikrintas serveryje. Mokėjimai šiame etape sąmoningai užrakinti.';
       track('pi_auth_complete');
     } catch (error) {
-      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
+      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT(?:-(?:NO-BRIDGE|ORIGIN|NETWORK|UNSUPPORTED|REJECTED|UNKNOWN))?|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
         ? error.message
-        : stage === 'AUTH-PI-REJECTED' ? classifyPiAuthError(error)
+        : stage === 'AUTH-SDK-INIT' ? classifyPiInitError(error)
+          : stage === 'AUTH-PI-REJECTED' ? classifyPiAuthError(error)
           : stage || 'AUTH-UNKNOWN';
       authStatus.textContent = `Prisijungimo nepavyko patvirtinti. Diagnostikos kodas: ${code}. Nieko neapmokestinta ir joks wallet duomuo neišsaugotas.`;
       auth.disabled = false;
