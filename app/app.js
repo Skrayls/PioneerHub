@@ -1,6 +1,6 @@
-const FRONTEND_BUILD = 'auth-sdk-click-init-r7';
+const FRONTEND_BUILD = 'auth-username-scope-r8';
 // Basic identity verification must work before requesting optional Pi capabilities.
-const AUTH_SCOPES = [];
+const AUTH_SCOPES = ['username'];
 let piInitPromise = null;
 
 const topics = [
