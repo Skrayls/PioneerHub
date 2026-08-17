@@ -4,6 +4,7 @@ const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
 const FRONTEND_BUILD = "pi-auth-settlement-r12";
+const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -17,6 +18,98 @@ const json = (body, status = 200, headers = {}) => Response.json(body, {
   status,
   headers: { "Cache-Control": "no-store", ...securityHeaders, ...headers },
 });
+
+function piAuthDiagnosticShell(nonce) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pi Auth Isolation Harness</title>
+</head>
+<body>
+  <main>
+    <h1>Pi Auth Isolation Harness</h1>
+    <p>Testnet-only diagnostic. Payments are locked. This page does not submit identity data or create payments.</p>
+    <button id="auth-username" type="button">AUTH username only</button>
+    <button id="auth-username-payments" type="button">AUTH username + payments</button>
+    <ol id="diagnostic-log" aria-live="polite"></ol>
+  </main>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script nonce="${nonce}">
+    (() => {
+      const log = document.querySelector('#diagnostic-log');
+      const usernameButton = document.querySelector('#auth-username');
+      const usernamePaymentsButton = document.querySelector('#auth-username-payments');
+      const buttons = [usernameButton, usernamePaymentsButton];
+      let authInFlight = false;
+
+      function render(marker, detail = '') {
+        const entry = document.createElement('li');
+        entry.textContent = detail ? marker + ': ' + detail : marker;
+        log.append(entry);
+      }
+
+      function sanitizedError(error) {
+        const name = typeof error?.name === 'string' ? error.name.slice(0, 120) : '';
+        const message = typeof error?.message === 'string' ? error.message.slice(0, 240) : '';
+        return [name, message].filter(Boolean).join(': ') || 'Error';
+      }
+
+      function onIncompletePaymentFound() {
+        render('INCOMPLETE_PAYMENT_CALLBACK');
+      }
+
+      async function runAuth(scopes) {
+        if (authInFlight) return;
+        authInFlight = true;
+        buttons.forEach(button => { button.disabled = true; });
+        render('AUTH_CALL_ENTER');
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        let authPromise;
+        try {
+          authPromise = Pi.authenticate(scopes, onIncompletePaymentFound);
+          render('AUTH_CALL_RETURNED');
+        } catch (error) {
+          render('AUTH_PROMISE_REJECTED', sanitizedError(error));
+          return;
+        }
+
+        let settled = false;
+        const watchdog = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          render('AUTH_PROMISE_TIMEOUT');
+        }, 15000);
+
+        Promise.resolve(authPromise)
+          .then(() => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(watchdog);
+            render('AUTH_PROMISE_RESOLVED');
+          })
+          .catch(error => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(watchdog);
+            render('AUTH_PROMISE_REJECTED', sanitizedError(error));
+          });
+      }
+
+      render('PAGE_READY');
+      if (typeof Pi === 'undefined') return;
+      render('SDK_PRESENT');
+      Pi.init({ version: "2.0" });
+      render('INIT_CALLED');
+      usernameButton.addEventListener('click', () => runAuth(["username"]));
+      usernamePaymentsButton.addEventListener('click', () => runAuth(["username", "payments"]));
+    })();
+  </script>
+</body>
+</html>`;
+}
 
 const base64url = (value) => btoa(String.fromCharCode(...new Uint8Array(value)))
   .replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
@@ -110,6 +203,21 @@ export class PaymentLedger {
 
 export default { async fetch(request, env) {
   const url = new URL(request.url);
+  if (url.pathname === PI_AUTH_DIAGNOSTIC_PATH && request.method === "GET") {
+    const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
+    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
+      "script-src 'self' https://sdk.minepi.com;",
+      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
+    );
+    return new Response(piAuthDiagnosticShell(nonce), {
+      headers: {
+        ...securityHeaders,
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Content-Security-Policy": contentSecurityPolicy,
+      },
+    });
+  }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
     const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
