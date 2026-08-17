@@ -31,6 +31,21 @@ assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
 assert.match(js, /const AUTH_SCOPES = \['username'\]/);
+assert.doesNotMatch(js, /\['username', 'payments'\]/);
+assert.match(js, /const FRONTEND_BUILD = 'pi-signin-oauth-r10'/);
+assert.match(js, /PI_SIGNIN_CLIENT_ID/);
+assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
+assert.match(js, /response_type: 'token'/);
+assert.match(js, /scope: 'username'/);
+assert.match(js, /crypto\.getRandomValues\(new Uint8Array\(32\)\)/);
+assert.match(js, /sessionStorage\.setItem\(PI_SIGNIN_STATE_KEY, state\)/);
+assert.match(js, /sessionStorage\.removeItem\(PI_SIGNIN_STATE_KEY\)/);
+assert.match(js, /fragment\.get\('state'\) !== expected/);
+assert.match(js, /fragment\.get\('token_type'\) !== 'Bearer'/);
+assert.match(js, /history\.replaceState\(\{\}, document\.title, location\.pathname\)/);
+assert.match(js, /await request\('\/api\/pi\/auth', \{ accessToken \}\)/);
+assert.ok(js.indexOf('history.replaceState') < js.indexOf("await request('/api/pi/auth'"), 'OAuth fragments must be removed before backend submission');
+assert.doesNotMatch(js, /auth-demo-scopes-r9/);
 assert.match(js, /pi\.authenticate\(AUTH_SCOPES, incompletePayment\)/);
 assert.match(js, /AUTH-PI-APP-ACCESS/);
 assert.match(js, /AUTH-PI-SCOPE/);
@@ -65,15 +80,48 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=auth-username-scope-r8'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=pi-signin-oauth-r10'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=auth-username-scope-r8/);
-assert.match(shellHtml, /app\.js\?v=auth-username-scope-r8/);
-assert.match(shellHtml, /Build: auth-username-scope-r8/);
+assert.match(shellHtml, /styles\.css\?v=pi-signin-oauth-r10/);
+assert.match(shellHtml, /app\.js\?v=pi-signin-oauth-r10/);
+assert.match(shellHtml, /Build: pi-signin-oauth-r10/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
+
+let callbackAssetPath;
+const callback = await worker.fetch(new Request('https://example.test/signin/callback'), {
+  ASSETS: { fetch: async request => {
+    callbackAssetPath = new URL(request.url).pathname;
+    return new Response('<html><body><section id="lab"></section></body></html>', { headers: { 'content-type': 'text/html' } });
+  } },
+});
+assert.equal(callback.status, 200);
+assert.equal(callbackAssetPath, '/', 'OAuth callback must receive the application shell');
+
+const nativeFetchForAuth = globalThis.fetch;
+const storedSessions = [];
+globalThis.fetch = async (url, init) => {
+  assert.equal(url, 'https://api.minepi.com/v2/me');
+  assert.equal(init.headers.Authorization, 'Bearer oauth-access-token');
+  return Response.json({ uid: 'oauth-user' });
+};
+const oauthAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: 'oauth-access-token' }),
+}), {
+  ASSETS: { fetch: async () => new Response('unreachable') },
+  PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret',
+  AUTH_SESSIONS: {
+    idFromName: value => value,
+    get: () => ({ fetch: async (_url, init) => { storedSessions.push(JSON.parse(init.body)); return new Response(null, { status: 204 }); } }),
+  },
+});
+globalThis.fetch = nativeFetchForAuth;
+assert.equal(oauthAuth.status, 200);
+assert.equal((await oauthAuth.json()).authenticated, true);
+assert.deepEqual(storedSessions.map(session => Object.keys(session).sort()), [['exp', 'uid']]);
+assert.deepEqual(storedSessions.map(session => session.uid), ['oauth-user']);
 
 const health = await worker.fetch(new Request('https://example.test/healthz'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'staging' });
 assert.equal(health.status, 200);

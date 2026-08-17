@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "auth-username-scope-r8";
+const FRONTEND_BUILD = "pi-signin-oauth-r10";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -53,7 +53,7 @@ async function piUser(accessToken) {
     const response = await fetch(`${PI_API}/me`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!response.ok) return { code: "AUTH-ME-VERIFY" };
     const result = await response.json();
-    return typeof result?.user?.uid === "string" ? { uid: result.user.uid } : { code: "AUTH-ME-VERIFY" };
+    return typeof result?.uid === "string" && result.uid.length > 0 && result.uid.length <= 256 ? { uid: result.uid } : { code: "AUTH-ME-VERIFY" };
   } catch { return { code: "AUTH-NETWORK" }; }
 }
 
@@ -140,7 +140,8 @@ export default { async fetch(request, env) {
     return json(result.body, result.status);
   }
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
-  const response = await env.ASSETS.fetch(request);
+  const assetRequest = url.pathname === "/signin/callback" ? new Request(new URL("/", request.url), request) : request;
+  const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
   const isShell = response.headers.get("Content-Type")?.includes("text/html");

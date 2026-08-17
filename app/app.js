@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'auth-username-scope-r8';
+const FRONTEND_BUILD = 'pi-signin-oauth-r10';
 // Basic identity verification must work before requesting optional Pi capabilities.
 const AUTH_SCOPES = ['username'];
 let piInitPromise = null;
@@ -394,6 +394,37 @@ function getPiReady() {
   return piInitPromise;
 }
 
+const PI_SIGNIN_CLIENT_ID = 'VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4';
+const PI_SIGNIN_REDIRECT_URI = 'https://pioneerhub.andriussimonaitis.workers.dev/signin/callback';
+const PI_SIGNIN_STATE_KEY = 'pioneerhub_pi_signin_state';
+
+function beginPiSignIn() {
+  const state = crypto.getRandomValues(new Uint8Array(32)).reduce((value, byte) => value + byte.toString(16).padStart(2, '0'), '');
+  sessionStorage.setItem(PI_SIGNIN_STATE_KEY, state);
+  const authorize = new URL('https://accounts.pinet.com/oauth/authorize');
+  authorize.search = new URLSearchParams({ response_type: 'token', client_id: PI_SIGNIN_CLIENT_ID, redirect_uri: PI_SIGNIN_REDIRECT_URI, scope: 'username', state });
+  location.assign(authorize);
+}
+
+async function handlePiSignInCallback() {
+  if (location.pathname !== '/signin/callback') return;
+  const status = document.querySelector('#piAuthStatus');
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  const expected = sessionStorage.getItem(PI_SIGNIN_STATE_KEY);
+  sessionStorage.removeItem(PI_SIGNIN_STATE_KEY);
+  history.replaceState({}, document.title, location.pathname);
+  const fail = code => { if (status) status.textContent = `Prisijungimo nepavyko patvirtinti. Diagnostikos kodas: ${code}.`; };
+  if (!expected || fragment.get('state') !== expected) return fail('PI-SIGNIN-STATE-MISMATCH');
+  if (fragment.get('error')) return fail('PI-SIGNIN-REJECTED');
+  if (fragment.get('token_type') !== 'Bearer') return fail('PI-SIGNIN-INVALID-RESULT');
+  const accessToken = fragment.get('access_token');
+  if (!accessToken) return fail('PI-SIGNIN-INVALID-RESULT');
+  try {
+    await request('/api/pi/auth', { accessToken });
+    if (status) status.textContent = 'Pi Sign-In patvirtintas serveryje. Mokėjimai lieka užrakinti.';
+  } catch (error) { fail(error?.message === 'AUTH-ME-VERIFY' ? 'AUTH-ME-VERIFY' : 'PI-SIGNIN-NETWORK'); }
+}
+
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
@@ -413,6 +444,8 @@ function bindLab() {
   }
 
   auth.addEventListener('click', async () => {
+    beginPiSignIn();
+    return;
     if (authInFlight) return;
     authInFlight = true;
     auth.disabled = true;
@@ -489,6 +522,7 @@ renderSafety();
 bindScamShield();
 renderRadar();
 bindLab();
+handlePiSignInCallback();
 bindCommunity();
 
 document.querySelectorAll('#lab a').forEach((anchor) => {
