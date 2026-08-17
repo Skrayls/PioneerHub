@@ -30,7 +30,7 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const FRONTEND_BUILD = 'pi-dual-auth-r11'/);
+assert.match(js, /const FRONTEND_BUILD = 'pi-auth-settlement-r12'/);
 assert.match(js, /PI_SIGNIN_CLIENT_ID/);
 assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
 assert.match(js, /response_type: 'token'/);
@@ -49,6 +49,8 @@ assert.match(js, /pi\.nativeFeaturesList\(\)/);
 assert.match(js, /if \(!pi\) \{\s*beginPiSignIn\(\);\s*return;/);
 assert.match(js, /const NATIVE_PI_AUTH_SCOPES = \['username', 'payments'\]/);
 assert.match(js, /pi\.authenticate\(NATIVE_PI_AUTH_SCOPES, incompletePayment\)/);
+assert.match(js, /withTimeout\(pi\.authenticate\(NATIVE_PI_AUTH_SCOPES, incompletePayment\), 15000, 'AUTH-PI-AUTHENTICATE-TIMEOUT'\)/);
+assert.match(js, /AUTH-PI-AUTHENTICATE-TIMEOUT/);
 assert.match(js, /await request\('\/api\/pi\/auth', \{ accessToken: result\.accessToken \}\)/);
 assert.doesNotMatch(js, /result\.user\.uid/);
 assert.match(js, /AUTH-PI-APP-ACCESS/);
@@ -67,6 +69,12 @@ assert.doesNotMatch(js, /sandbox:\s*true/);
 assert.doesNotMatch(js, /passphrase.*fetch|fetch.*passphrase/i);
 assert.match(css, /@media/);
 
+const timeoutSource = js.match(/function withTimeout[\s\S]*?\n}\n\nasync function getNativePiBridge/);
+assert.ok(timeoutSource, 'timeout helper must remain available to both native bridge and native auth');
+const withTimeout = Function(`${timeoutSource[0].replace(/\n\nasync function getNativePiBridge$/, '')}; return withTimeout;`)();
+await assert.rejects(withTimeout(new Promise(() => {}), 1, 'AUTH-PI-AUTHENTICATE-TIMEOUT'), { message: 'AUTH-PI-AUTHENTICATE-TIMEOUT' });
+await assert.rejects(withTimeout(Promise.reject(new Error('AUTH-PI-USER-DENIED')), 20, 'AUTH-PI-AUTHENTICATE-TIMEOUT'), { message: 'AUTH-PI-USER-DENIED' });
+
 const brand = await readFile(new URL('brand.css', root), 'utf8');
 assert.match(brand, /#2946a3/);
 assert.match(brand, /@media/);
@@ -81,13 +89,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=pi-dual-auth-r11'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=pi-auth-settlement-r12'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=pi-dual-auth-r11/);
-assert.match(shellHtml, /app\.js\?v=pi-dual-auth-r11/);
-assert.match(shellHtml, /Build: pi-dual-auth-r11/);
+assert.match(shellHtml, /styles\.css\?v=pi-auth-settlement-r12/);
+assert.match(shellHtml, /app\.js\?v=pi-auth-settlement-r12/);
+assert.match(shellHtml, /Build: pi-auth-settlement-r12/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 
