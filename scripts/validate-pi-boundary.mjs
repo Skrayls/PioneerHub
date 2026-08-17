@@ -10,10 +10,10 @@ const [config, html, app, localVars] = await Promise.all([
 
 assert.match(config, /"PI_NETWORK": "testnet"/);
 assert.match(config, /"PI_NETWORK": "testnet"/);
-assert.match(app, /const AUTH_SCOPES = \['username'\]/);
-assert.match(app, /pi\.authenticate\(AUTH_SCOPES, incompletePayment\)/);
-assert.match(app, /pi\.createPayment\(/);
-assert.match(app, /amount: 0\.01/);
+assert.match(app, /const NATIVE_PI_AUTH_SCOPES = \['username', 'payments'\]/);
+assert.match(app, /pi\.authenticate\(NATIVE_PI_AUTH_SCOPES, incompletePayment\)/);
+assert.match(app, /getNativePiBridge\(\)/);
+assert.doesNotMatch(app, /pi\.createPayment\(/);
 assert.doesNotMatch(app, /sandbox:\s*true/);
 assert.doesNotMatch(config, /mainnet/i);
 assert.match(localVars, /PI_TESTNET_API_KEY=/);

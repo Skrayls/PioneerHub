@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "pi-signin-oauth-r10";
+const FRONTEND_BUILD = "pi-dual-auth-r11";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",

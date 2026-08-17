@@ -1,6 +1,6 @@
-const FRONTEND_BUILD = 'pi-signin-oauth-r10';
-// Basic identity verification must work before requesting optional Pi capabilities.
-const AUTH_SCOPES = ['username'];
+const FRONTEND_BUILD = 'pi-dual-auth-r11';
+// OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
+const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
 
 const topics = [
@@ -389,9 +389,27 @@ function getPiReady() {
       if (!window.Pi) throw new Error('AUTH-SDK-LOAD');
       await window.Pi.init({ version: '2.0' });
       return window.Pi;
-    })();
+    })().catch(error => { piInitPromise = null; throw error; });
   }
   return piInitPromise;
+}
+
+function withTimeout(promise, timeoutMs) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('AUTH-SDK-BRIDGE-TIMEOUT')), timeoutMs); }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function getNativePiBridge() {
+  const candidate = window.Pi;
+  if (!candidate || typeof candidate.init !== 'function' || typeof candidate.authenticate !== 'function' || typeof candidate.nativeFeaturesList !== 'function') return null;
+  try {
+    const pi = await withTimeout(getPiReady(), 2000);
+    await withTimeout(pi.nativeFeaturesList(), 2000);
+    return pi;
+  } catch { return null; }
 }
 
 const PI_SIGNIN_CLIENT_ID = 'VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4';
@@ -428,13 +446,9 @@ async function handlePiSignInCallback() {
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
-  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab.</h2><p><strong>LIVE:</strong> vyksta bazinės Pi Browser tapatybės patikros etapas. Šiame bandyme neprašoma papildomų scopes ir nekuriamas mokėjimas.</p><p class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: ACTIVE</p></div><div class="status-strip"><span class="state live">LIVE: minimalus Pi Auth testas</span><span class="state ready">READY: server verification ir duplicate protection</span><span class="state ready">PAYMENTS: užrakinta iki atskiros validacijos</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Patikrink bazinį Pi prisijungimą</h3><p>Nėra el. pašto, slaptažodžio, wallet importo ar papildomų scope. Tokenas tikrinamas per serverinį <code>/me</code>; passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Patikrinti Pi Auth</button><p id="piAuthStatus" class="note" aria-live="polite">Šis etapas tik patikrina tapatybę. Mokėjimo mygtukas užrakintas.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Test-Pi dar užrakintas</h3><p>Mokėjimo scope ir 0.01 Test-Pi užklausa bus tikrinami tik po atskiro bazinio Auth patvirtinimo.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Laukiama bazinio Auth patvirtinimo</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div>`;
+  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab.</h2><p><strong>LIVE:</strong> įprastoje naršyklėje naudojamas Pi Sign-in su <code>username</code>; Pi Browser prašo native <code>username</code> ir <code>payments</code> scopes. Mokėjimas nekuriamas.</p><p class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: ACTIVE</p></div><div class="status-strip"><span class="state live">LIVE: dual Pi Auth testas</span><span class="state ready">READY: server verification ir duplicate protection</span><span class="state ready">PAYMENTS: užrakinta iki atskiros validacijos</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Patikrink Pi prisijungimą</h3><p>Nėra el. pašto, slaptažodžio ar wallet importo. Tokenas tikrinamas per serverinį <code>/me</code>; Pi Browser payment scope leidimo prašo tik native tapatybės patikrai, o passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Patikrinti Pi Auth</button><p id="piAuthStatus" class="note" aria-live="polite">Šis etapas tik patikrina tapatybę. Mokėjimo mygtukas užrakintas.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Test-Pi užrakintas</h3><p>Native payment scope gali būti patvirtintas Pi Browser, bet Test-Pi užklausa šiame leidime nekuriama.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Laukiama atskiro Payment Lab leidimo</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div>`;
   const auth = lab.querySelector('#piAuth');
   const authStatus = lab.querySelector('#piAuthStatus');
-  const payment = lab.querySelector('#piPayment');
-  const paymentStatus = lab.querySelector('#piPaymentStatus');
-  let pi;
-  let authorization;
   let authInFlight = false;
 
   let incompletePaymentFound = false;
@@ -444,28 +458,30 @@ function bindLab() {
   }
 
   auth.addEventListener('click', async () => {
-    beginPiSignIn();
-    return;
     if (authInFlight) return;
     authInFlight = true;
     auth.disabled = true;
-    let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Tikriname Pi SDK ir Testnet prisijungimą…';
-    track('pi_auth_start');
     try {
+      const pi = await getNativePiBridge();
+      if (!pi) {
+        beginPiSignIn();
+        return;
+      }
+
+      let stage = 'AUTH-SDK-LOAD'; authStatus.textContent = 'Tikriname Pi Browser ir Testnet prisijungimą…';
+      track('pi_auth_start');
       stage = 'AUTH-SDK-INIT';
-      pi = await getPiReady();
       stage = 'AUTH-PI-REJECTED';
-      const result = await pi.authenticate(AUTH_SCOPES, incompletePayment);
-      if (!result || typeof result.accessToken !== 'string' || !result.accessToken || !result.user || typeof result.user.uid !== 'string' || !result.user.uid) throw new Error('AUTH-PI-INVALID-RESULT');
-      stage = 'AUTH-ME-VERIFY'; const verified = await request('/api/pi/auth', { accessToken: result.accessToken });
+      const result = await pi.authenticate(NATIVE_PI_AUTH_SCOPES, incompletePayment);
+      if (!result || typeof result.accessToken !== 'string' || !result.accessToken) throw new Error('AUTH-PI-INVALID-RESULT');
+      stage = 'AUTH-ME-VERIFY'; await request('/api/pi/auth', { accessToken: result.accessToken });
       stage = 'AUTH-SESSION';
-      authorization = verified.authorization;
       authStatus.textContent = incompletePaymentFound
         ? 'Bazinis Testnet prisijungimas patikrintas, tačiau rastas nebaigtas ankstesnis mokėjimas. Mokėjimai lieka užrakinti. Diagnostikos kodas: AUTH-PI-INCOMPLETE-PAYMENT.'
         : 'Bazinis Testnet prisijungimas patikrintas serveryje. Mokėjimai šiame etape sąmoningai užrakinti.';
       track('pi_auth_complete');
     } catch (error) {
-      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT(?:-(?:NO-BRIDGE|ORIGIN|NETWORK|UNSUPPORTED|REJECTED|UNKNOWN))?|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
+      const code = /^AUTH-(?:SDK-LOAD|SDK-INIT(?:-(?:NO-BRIDGE|ORIGIN|NETWORK|UNSUPPORTED|REJECTED|UNKNOWN))?|SDK-BRIDGE-TIMEOUT|ME-VERIFY|SESSION|NETWORK|PI-(?:USER-DENIED|NOT-AUTHORIZED|APP-ACCESS|SCOPE|INCOMPLETE-PAYMENT|NETWORK|SDK-ERROR|SDK-INIT|ORIGIN|PERMISSION|CALLBACK|INVALID-RESULT|EMPTY-RESULT|INTERNAL|UNKNOWN))$/.test(error?.message)
         ? error.message
         : stage === 'AUTH-SDK-INIT' ? classifyPiInitError(error)
           : stage === 'AUTH-PI-REJECTED' ? classifyPiAuthError(error)
@@ -475,26 +491,6 @@ function bindLab() {
     } finally { authInFlight = false; }
   });
 
-  payment.addEventListener('click', async () => {
-    if (!pi || payment.disabled) return;
-    payment.disabled = true;
-    paymentStatus.textContent = 'Kuriama aiškiai pažymėta Testnet užklausa Pi Browser lange…';
-    track('testnet_payment_start');
-    try {
-      await pi.createPayment({ amount: 0.01, memo: 'PioneerHub Testnet Payment Lab', metadata: { purpose: 'testnet_payment_lab' } }, {
-        onReadyForServerApproval: async (paymentId) => { await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/approve`, {}, authorization); },
-        onReadyForServerCompletion: async (paymentId, txid) => {
-          await request(`/api/pi/payments/${encodeURIComponent(paymentId)}/complete`, { txid }, authorization);
-          paymentStatus.textContent = 'Testnet mokėjimas užbaigtas serveryje. Test-Pi neturi piniginės vertės.';
-          track('testnet_payment_complete');
-        },
-        onCancel: () => { paymentStatus.textContent = 'Testnet mokėjimas atšauktas. Nieko nepervesta Mainnet tinkle.'; },
-        onError: () => { paymentStatus.textContent = 'Testnet mokėjimo nepavyko užbaigti. Nieko nepatvirtinta kaip sėkminga.'; },
-      });
-    } catch {
-      paymentStatus.textContent = 'Testnet mokėjimo užklausa nepavyko. Nieko nepatvirtinta kaip sėkminga.';
-    } finally { payment.disabled = false; }
-  });
 }
 
 function bindCommunity() {
