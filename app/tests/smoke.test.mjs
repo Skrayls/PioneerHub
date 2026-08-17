@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import worker, { PaymentLedger } from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
-const [html, js, css] = await Promise.all(['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')));
+const [html, js, css, workerSource] = await Promise.all([
+  ...['index.html', 'app.js', 'styles.css'].map(file => readFile(new URL(file, root), 'utf8')),
+  readFile(new URL('../../src/worker.js', import.meta.url), 'utf8'),
+]);
 assert.match(html, /PioneerHub nėra Pi Network™/);
 assert.match(html, /30 sekundžių patikra/i);
 assert.match(html, /PIONEERHUB SCAM SHIELD · NEMOKAMAS/);
@@ -108,6 +111,32 @@ const callback = await worker.fetch(new Request('https://example.test/signin/cal
 });
 assert.equal(callback.status, 200);
 assert.equal(callbackAssetPath, '/', 'OAuth callback must receive the application shell');
+
+let diagnosticAssetFetch = false;
+const diagnostic = await worker.fetch(new Request('https://example.test/diag/pi-auth'), {
+  ASSETS: { fetch: async () => { diagnosticAssetFetch = true; return new Response('unreachable'); } },
+});
+const diagnosticHtml = await diagnostic.text();
+assert.equal(diagnostic.status, 200);
+assert.equal(diagnosticAssetFetch, false, 'diagnostic must not bootstrap PioneerHub assets');
+assert.match(diagnostic.headers.get('content-security-policy'), /https:\/\/sdk\.minepi\.com 'nonce-/);
+assert.match(diagnosticHtml, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script>/);
+assert.match(diagnosticHtml, /Pi\.init\(\{ version: "2\.0" \}\);/);
+assert.doesNotMatch(diagnosticHtml, /await Pi\.init/);
+assert.match(diagnosticHtml, /AUTH_CALL_ENTER/);
+assert.match(diagnosticHtml, /AUTH_CALL_RETURNED/);
+assert.match(diagnosticHtml, /AUTH_PROMISE_RESOLVED/);
+assert.match(diagnosticHtml, /AUTH_PROMISE_REJECTED/);
+assert.match(diagnosticHtml, /AUTH_PROMISE_TIMEOUT/);
+assert.match(diagnosticHtml, /Pi\.authenticate\(scopes, onIncompletePaymentFound\)/);
+assert.match(diagnosticHtml, /runAuth\(\["username"\]\)/);
+assert.match(diagnosticHtml, /runAuth\(\["username", "payments"\]\)/);
+assert.ok(diagnosticHtml.indexOf("render('AUTH_CALL_RETURNED')") < diagnosticHtml.indexOf('const watchdog = setTimeout'), 'watchdog must start after Pi.authenticate returns');
+assert.match(diagnosticHtml, /INCOMPLETE_PAYMENT_CALLBACK/);
+assert.match(diagnosticHtml, /Testnet-only diagnostic\. Payments are locked\./);
+assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList|fetch\(|accessToken|result\.user\.uid|localStorage|sessionStorage/i);
+assert.match(workerSource, /const FRONTEND_BUILD = "pi-auth-settlement-r12";/, 'R12 product auth build must remain unchanged');
+assert.match(workerSource, /PI_AUTH_DIAGNOSTIC_PATH = "\/diag\/pi-auth"/);
 
 const nativeFetchForAuth = globalThis.fetch;
 const storedSessions = [];
