@@ -56,13 +56,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=testnet-auth-min-r3'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=auth-settlement-r4'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=testnet-auth-min-r3/);
-assert.match(shellHtml, /app\.js\?v=testnet-auth-min-r3/);
-assert.match(shellHtml, /Build: testnet-auth-min-r3/);
+assert.match(shellHtml, /styles\.css\?v=auth-settlement-r4/);
+assert.match(shellHtml, /app\.js\?v=auth-settlement-r4/);
+assert.match(shellHtml, /Build: auth-settlement-r4/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 

@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'testnet-auth-min-r3';
+const FRONTEND_BUILD = 'auth-settlement-r4';
 // Basic identity verification must work before requesting optional Pi capabilities.
 const AUTH_SCOPES = [];
 
@@ -395,7 +395,7 @@ function bindLab() {
   let incompletePaymentFound = false;
   function incompletePayment() {
     incompletePaymentFound = true;
-    track('payment_lab_start'); // Safe event only; never inspect PaymentDTO during auth.
+    track('pi_incomplete_payment_callback'); // Safe event only; never inspect PaymentDTO during auth.
   }
 
   auth.addEventListener('click', async () => {

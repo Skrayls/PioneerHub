@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "testnet-auth-min-r3";
+const FRONTEND_BUILD = "auth-settlement-r4";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -112,7 +112,7 @@ export default { async fetch(request, env) {
   const url = new URL(request.url);
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
-    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "testnet_payment_start", "testnet_payment_complete"]);
+    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
     if (allowed.has(event)) console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }
