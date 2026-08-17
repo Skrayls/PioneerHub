@@ -60,7 +60,7 @@ function piAuthDiagnosticShell(nonce) {
         render('INCOMPLETE_PAYMENT_CALLBACK');
       }
 
-      async function runAuth(scopes) {
+      async function runAuth(startAuth) {
         if (authInFlight) return;
         authInFlight = true;
         buttons.forEach(button => { button.disabled = true; });
@@ -69,7 +69,7 @@ function piAuthDiagnosticShell(nonce) {
 
         let authPromise;
         try {
-          authPromise = Pi.authenticate(scopes, onIncompletePaymentFound);
+          authPromise = startAuth();
           render('AUTH_CALL_RETURNED');
         } catch (error) {
           render('AUTH_PROMISE_REJECTED', sanitizedError(error));
@@ -103,8 +103,8 @@ function piAuthDiagnosticShell(nonce) {
       render('SDK_PRESENT');
       Pi.init({ version: "2.0" });
       render('INIT_CALLED');
-      usernameButton.addEventListener('click', () => runAuth(["username"]));
-      usernamePaymentsButton.addEventListener('click', () => runAuth(["username", "payments"]));
+      usernameButton.addEventListener('click', () => runAuth(() => Pi.authenticate(["username"], onIncompletePaymentFound)));
+      usernamePaymentsButton.addEventListener('click', () => runAuth(() => Pi.authenticate(["username", "payments"], onIncompletePaymentFound)));
     })();
   </script>
 </body>
