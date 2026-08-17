@@ -20,9 +20,7 @@ assert.match(html, /TESTNET INTEGRATION ACTIVE — AUTH TESTING/);
 assert.match(html, /Test-Pi užrakintas/);
 assert.doesNotMatch(html, /REQUIRES PI DEVELOPER PORTAL CONFIGURATION/);
 assert.match(html, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script>/);
-assert.match(html, /window\.__pioneerHubPiReady=\(async\(\)=>/);
-assert.match(html, /await window\.Pi\.init\(\{version:'2\.0'\}\)/);
-assert.doesNotMatch(html, /__pioneerHubPiInitState/);
+assert.doesNotMatch(html, /Pi\.init/);
 assert.match(js, /passphrase/);
 assert.match(js, /learn_article_open/);
 assert.match(js, /scam_shield_start/);
@@ -40,7 +38,10 @@ assert.match(js, /AUTH-PI-INCOMPLETE-PAYMENT/);
 assert.match(js, /pi\.createPayment\(/);
 assert.match(js, /amount: 0\.01/);
 assert.doesNotMatch(js, /function loadPiSdk/);
-assert.match(js, /pi = await window\.__pioneerHubPiReady/);
+assert.match(js, /let piInitPromise = null/);
+assert.match(js, /function getPiReady\(\)/);
+assert.match(js, /await window\.Pi\.init\(\{ version: '2\.0' \}\)/);
+assert.match(js, /pi = await getPiReady\(\)/);
 assert.match(js, /AUTH-PI-ORIGIN/);
 assert.match(js, /AUTH-PI-SDK-INIT/);
 assert.match(js, /AUTH-SDK-INIT-NO-BRIDGE/);
@@ -64,13 +65,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=auth-sdk-await-r6'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=auth-sdk-click-init-r7'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=auth-sdk-await-r6/);
-assert.match(shellHtml, /app\.js\?v=auth-sdk-await-r6/);
-assert.match(shellHtml, /Build: auth-sdk-await-r6/);
+assert.match(shellHtml, /styles\.css\?v=auth-sdk-click-init-r7/);
+assert.match(shellHtml, /app\.js\?v=auth-sdk-click-init-r7/);
+assert.match(shellHtml, /Build: auth-sdk-click-init-r7/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 
