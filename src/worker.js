@@ -5,6 +5,10 @@ const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
 const FRONTEND_BUILD = "pi-auth-settlement-r12";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
+const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
+const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
+const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
+const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -163,6 +167,94 @@ function piAuthDiagnosticShell(nonce) {
 </html>`;
 }
 
+function piSignInDiagnosticShell(nonce) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pi Sign-In Isolation Harness</title></head>
+<body><main><h1>Pi Sign-In Isolation Harness</h1><p>Testnet-only diagnostic. No payments are created.</p><button id="pi-signin" type="button" disabled>SIGN IN WITH PI — USERNAME ONLY</button><ol id="diagnostic-log" aria-live="polite"></ol></main>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
+(() => {
+  const stateKey = '${PI_SIGNIN_DIAGNOSTIC_STATE_KEY}';
+  const button = document.querySelector('#pi-signin');
+  const log = document.querySelector('#diagnostic-log');
+  const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = new Date().toISOString() + ' ' + marker + (detail ? ': ' + detail : ''); log.append(item); };
+  const context = () => render('RUNTIME_CONTEXT', JSON.stringify({ href: location.href, origin: location.origin, referrer: document.referrer, userAgent: navigator.userAgent, isTopLevel: window.top === window.self }));
+  const randomState = () => crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(32)), value => value.toString(16).padStart(2, '0')).join('');
+  render('PAGE_READY'); context();
+  if (typeof Pi === 'undefined') return;
+  render('SDK_PRESENT');
+  (async () => {
+    render('INIT_CALL_ENTER');
+    try {
+      await Pi.init({ version: "2.0" });
+      render('INIT_RESOLVED');
+      button.disabled = false;
+    } catch (error) {
+      render('INIT_REJECTED', String(error?.message || error).slice(0, 240));
+      return;
+    }
+    button.addEventListener('click', () => {
+      const state = randomState();
+      sessionStorage.setItem(stateKey, state);
+      render('SIGNIN_CLICK');
+      render('STATE_CREATED', 'true');
+      render('SIGNIN_CALL_ENTER');
+      Pi.signIn({ clientId: "${PI_SIGNIN_CLIENT_ID}", redirectUri: "${PI_SIGNIN_REDIRECT_URI}", scopes: ["username"], state });
+    }, { once: true });
+  })();
+})();
+</script></body></html>`;
+}
+
+function piSignInCallbackBootstrap(nonce, version) {
+  return `<script nonce="${nonce}">
+(() => {
+  const stateKey = '${PI_SIGNIN_DIAGNOSTIC_STATE_KEY}';
+  if (!sessionStorage.getItem(stateKey)) {
+    const productApp = document.querySelector('[data-pioneerhub-product-app]');
+    productApp.type = 'text/javascript';
+    productApp.src = 'app.js${version}';
+    return;
+  }
+  document.title = 'Pi Sign-In Isolation Callback';
+  const main = document.createElement('main');
+  const title = document.createElement('h1'); title.textContent = 'Pi Sign-In Isolation Callback';
+  const log = document.createElement('ol'); log.id = 'diagnostic-log'; log.setAttribute('aria-live', 'polite');
+  main.append(title, log); document.body.replaceChildren(main);
+  const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = new Date().toISOString() + ' ' + marker + (detail ? ': ' + detail : ''); log.append(item); };
+  const clean = value => String(value || '').replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(token|secret|authorization|api_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').slice(0, 1000);
+  const fragment = new URLSearchParams(location.hash.startsWith('#') ? location.hash.slice(1) : '');
+  const expectedState = sessionStorage.getItem(stateKey);
+  const returnedState = fragment.get('state');
+  const stateMatch = Boolean(expectedState) && returnedState === expectedState;
+  render('CALLBACK_LOADED');
+  render('STATE_PRESENT', String(Boolean(expectedState)));
+  render('STATE_MATCH', String(stateMatch));
+  sessionStorage.removeItem(stateKey);
+  if (!stateMatch) { render('STATE_MISMATCH'); return; }
+  const oauthError = fragment.get('error');
+  if (oauthError) { render('OAUTH_ERROR', clean(oauthError)); return; }
+  const accessToken = fragment.get('access_token');
+  if (!accessToken) { render('ACCESS_TOKEN_PRESENT', 'false'); return; }
+  render('ACCESS_TOKEN_PRESENT', 'true');
+  if (fragment.get('token_type')) render('TOKEN_TYPE', clean(fragment.get('token_type')));
+  if (fragment.get('expires_in')) render('EXPIRES_IN', clean(fragment.get('expires_in')));
+  history.replaceState(null, '', window.location.pathname);
+  (async () => {
+    try {
+      render('ME_REQUEST_SENT');
+      const response = await fetch('https://api.minepi.com/v2/me', { headers: { Authorization: 'Bearer ' + accessToken } });
+      render('ME_HTTP_STATUS', String(response.status));
+      if (!response.ok) { render('ME_ERROR', clean(await response.text())); return; }
+      const identity = await response.json();
+      render('ME_OK');
+      render('uid present', String(Boolean(identity?.uid)));
+      render('username', typeof identity?.username === 'string' ? clean(identity.username) : '');
+    } catch (error) { render('ME_ERROR', clean(error?.message || error)); }
+  })();
+})();
+</script>`;
+}
+
 const base64url = (value) => btoa(String.fromCharCode(...new Uint8Array(value)))
   .replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 const bytes = (value) => Uint8Array.from(atob(value.replaceAll("-", "+").replaceAll("_", "/")), char => char.charCodeAt(0));
@@ -270,6 +362,16 @@ export default { async fetch(request, env) {
       },
     });
   }
+  if (url.pathname === PI_SIGNIN_DIAGNOSTIC_PATH && request.method === "GET") {
+    const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
+    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
+      "script-src 'self' https://sdk.minepi.com;",
+      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
+    );
+    return new Response(piSignInDiagnosticShell(nonce), {
+      headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": contentSecurityPolicy },
+    });
+  }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
     const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
@@ -300,7 +402,8 @@ export default { async fetch(request, env) {
     return json(result.body, result.status);
   }
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
-  const assetRequest = url.pathname === "/signin/callback" ? new Request(new URL("/", request.url), request) : request;
+  const isSignInCallback = url.pathname === "/signin/callback";
+  const assetRequest = isSignInCallback ? new Request(new URL("/", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
@@ -310,17 +413,20 @@ export default { async fetch(request, env) {
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   if (isShell) {
     const version = `?v=${FRONTEND_BUILD}`;
+    const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
     const shellStatus = `<aside class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: PENDING</aside>`;
+    if (isSignInCallback) headers.set("Content-Security-Policy", securityHeaders["Content-Security-Policy"].replace("script-src 'self' https://sdk.minepi.com;", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`));
     const html = (await response.text())
       .replaceAll('href="styles.css"', `href="styles.css${version}"`)
       .replaceAll('href="shield.css"', `href="shield.css${version}"`)
       .replaceAll('href="brand.css"', `href="brand.css${version}"`)
-      .replaceAll('src="app.js"', `src="app.js${version}"`)
+      .replaceAll('src="app.js"', isSignInCallback ? 'type="application/pioneerhub-product-app" data-pioneerhub-product-app' : `src="app.js${version}"`)
       .replaceAll("REQUIRES PI DEVELOPER PORTAL CONFIGURATION", "TESTNET INTEGRATION ACTIVE — AUTH TESTING")
       .replace("PioneerHub dar nejungia Pi prisijungimo ar realiu mokejimu.", "Pi Developer Portal, domain verification, PiNet ir serverio Testnet raktas yra sukonfiguruoti. Mokėjimas lieka užrakintas iki patikrinto prisijungimo.")
       .replace("Pi loginas nėra aktyvus", "Pi loginas tikrinamas Testnet aplinkoje")
       .replace("Testnet mokėjimas dar nevykdomas", "Testnet mokėjimas užrakintas iki patikrinto prisijungimo")
-      .replace("</section>\n<section id=\"community\"", `${shellStatus}</section>\n<section id="community"`);
+      .replace("</section>\n<section id=\"community\"", `${shellStatus}</section>\n<section id="community"`)
+      .replace("</body>", isSignInCallback ? `${piSignInCallbackBootstrap(nonce, version)}</body>` : "</body>");
     return new Response(html, { status: response.status, statusText: response.statusText, headers });
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
