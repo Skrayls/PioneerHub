@@ -31,8 +31,8 @@ function piAuthDiagnosticShell(nonce) {
   <main>
     <h1>Pi Auth Isolation Harness</h1>
     <p>Testnet-only diagnostic. Payments are locked. This page does not submit identity data or create payments.</p>
-    <button id="auth-username" type="button">AUTH username only</button>
-    <button id="auth-username-payments" type="button">AUTH username + payments</button>
+    <button id="auth-username" type="button" disabled>AUTH username only</button>
+    <button id="auth-username-payments" type="button" disabled>AUTH username + payments</button>
     <ol id="diagnostic-log" aria-live="polite"></ol>
   </main>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -43,68 +43,120 @@ function piAuthDiagnosticShell(nonce) {
       const usernamePaymentsButton = document.querySelector('#auth-username-payments');
       const buttons = [usernameButton, usernamePaymentsButton];
       let authInFlight = false;
+      const sensitiveKey = /token|secret|authorization|api.?key|passphrase|wallet|private.?key/i;
 
       function render(marker, detail = '') {
         const entry = document.createElement('li');
-        entry.textContent = detail ? marker + ': ' + detail : marker;
+        entry.textContent = new Date().toISOString() + ' ' + marker + (detail ? ': ' + detail : '');
         log.append(entry);
       }
 
-      function sanitizedError(error) {
-        const name = typeof error?.name === 'string' ? error.name.slice(0, 120) : '';
-        const message = typeof error?.message === 'string' ? error.message.slice(0, 240) : '';
-        return [name, message].filter(Boolean).join(': ') || 'Error';
+      function redact(value) {
+        return String(value || '')
+          .replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]')
+          .replace(/(access_?token|token|secret|authorization|api_?key|passphrase|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]')
+          .replace(/[A-Za-z0-9_-]{16,}\\.[A-Za-z0-9_-]{16,}\\.[A-Za-z0-9_-]{16,}/g, '[REDACTED]')
+          .slice(0, 1200);
       }
 
-      function onIncompletePaymentFound() {
+      function safeValue(value, seen = new WeakSet(), depth = 0) {
+        if (value === null || typeof value === 'boolean' || typeof value === 'number') return value;
+        if (typeof value === 'string') return redact(value);
+        if (typeof value !== 'object' || depth > 2 || seen.has(value)) return typeof value;
+        seen.add(value);
+        if (Array.isArray(value)) return value.slice(0, 12).map(item => safeValue(item, seen, depth + 1));
+        return Object.fromEntries(Object.keys(value).slice(0, 24).map(key => [
+          sensitiveKey.test(key) ? '[REDACTED_PROPERTY]' : key,
+          sensitiveKey.test(key) ? '[REDACTED]' : safeValue(value[key], seen, depth + 1),
+        ]));
+      }
+
+      function errorDetails(error) {
+        const ownNames = Object.getOwnPropertyNames(error || {}).map(name => sensitiveKey.test(name) ? '[REDACTED_PROPERTY]' : name);
+        const enumerableKeys = Object.keys(error || {}).map(name => sensitiveKey.test(name) ? '[REDACTED_PROPERTY]' : name);
+        let serialized = '';
+        try { serialized = JSON.stringify(safeValue(error)); } catch { serialized = '[unserializable]'; }
+        return JSON.stringify({
+          name: redact(error?.name),
+          message: redact(error?.message),
+          string: redact(error),
+          constructor: redact(error?.constructor?.name),
+          ownPropertyNames: ownNames,
+          enumerableKeys,
+          json: redact(serialized),
+          stack: redact(error?.stack),
+        });
+      }
+
+      function onIncompletePaymentFound(payment) {
+        void payment;
         render('INCOMPLETE_PAYMENT_CALLBACK');
       }
 
-      async function runAuth(startAuth) {
+      function showRuntimeContext() {
+        render('RUNTIME_CONTEXT', JSON.stringify({
+          href: location.href,
+          origin: location.origin,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          isTopLevel: window.top === window.self,
+        }));
+      }
+
+      async function runAuth(scopes) {
         if (authInFlight) return;
         authInFlight = true;
         buttons.forEach(button => { button.disabled = true; });
+        render('AUTH_CLICK');
+        render('AUTH_SCOPES', JSON.stringify(scopes));
+        render('AUTH_CALLBACK_TYPE', typeof onIncompletePaymentFound);
         render('AUTH_CALL_ENTER');
-        await new Promise(resolve => requestAnimationFrame(resolve));
 
         let authPromise;
         try {
-          authPromise = startAuth();
-          render('AUTH_CALL_RETURNED');
+          authPromise = Pi.authenticate(scopes, onIncompletePaymentFound);
+          render('AUTH_PROMISE_CREATED');
         } catch (error) {
-          render('AUTH_PROMISE_REJECTED', sanitizedError(error));
+          render('AUTH_REJECTED', errorDetails(error));
           return;
         }
 
-        let settled = false;
-        const watchdog = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          render('AUTH_PROMISE_TIMEOUT');
-        }, 15000);
-
-        Promise.resolve(authPromise)
-          .then(() => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(watchdog);
-            render('AUTH_PROMISE_RESOLVED');
-          })
-          .catch(error => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(watchdog);
-            render('AUTH_PROMISE_REJECTED', sanitizedError(error));
-          });
+        try {
+          const result = await authPromise;
+          const identity = result && typeof result === 'object' ? result.user : null;
+          render('AUTH_RESOLVED', JSON.stringify({
+            accessTokenExists: Boolean(result?.accessToken),
+            uidPresent: Boolean(identity?.uid),
+            username: typeof identity?.username === 'string' ? redact(identity.username) : '',
+          }));
+        } catch (error) {
+          render('AUTH_REJECTED', errorDetails(error));
+        }
       }
 
       render('PAGE_READY');
+      showRuntimeContext();
       if (typeof Pi === 'undefined') return;
       render('SDK_PRESENT');
-      Pi.init({ version: "2.0" });
-      render('INIT_CALLED');
-      usernameButton.addEventListener('click', () => runAuth(() => Pi.authenticate(["username"], onIncompletePaymentFound)));
-      usernamePaymentsButton.addEventListener('click', () => runAuth(() => Pi.authenticate(["username", "payments"], onIncompletePaymentFound)));
+      (async () => {
+        render('INIT_CALL_ENTER');
+        try {
+          await Pi.init({ version: "2.0" });
+          render('INIT_RESOLVED');
+          buttons.forEach(button => { button.disabled = false; });
+        } catch (error) {
+          render('INIT_REJECTED', errorDetails(error));
+          return;
+        }
+        usernameButton.addEventListener('click', () => {
+          const scopes = ["username"];
+          runAuth(scopes);
+        });
+        usernamePaymentsButton.addEventListener('click', () => {
+          const scopes = ["username", "payments"];
+          runAuth(scopes);
+        });
+      })();
     })();
   </script>
 </body>
