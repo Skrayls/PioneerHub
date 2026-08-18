@@ -112,6 +112,40 @@ const callback = await worker.fetch(new Request('https://example.test/signin/cal
 assert.equal(callback.status, 200);
 assert.equal(callbackAssetPath, '/', 'OAuth callback must receive the application shell');
 
+let signInAssetFetch = false;
+const signInDiagnostic = await worker.fetch(new Request('https://example.test/diag/pi-signin'), {
+  ASSETS: { fetch: async () => { signInAssetFetch = true; return new Response('unreachable'); } },
+});
+const signInHtml = await signInDiagnostic.text();
+assert.equal(signInDiagnostic.status, 200);
+assert.equal(signInAssetFetch, false, 'Pi Sign-In diagnostic must not bootstrap PioneerHub assets');
+assert.match(signInHtml, /Pi Sign-In Isolation Harness/);
+assert.match(signInHtml, /await Pi\.init\(\{ version: "2\.0" \}\)/);
+assert.match(signInHtml, /crypto\.randomUUID/);
+assert.match(signInHtml, /pi_signin_diag_state/);
+assert.match(signInHtml, /clientId: "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4"/);
+assert.match(signInHtml, /redirectUri: "https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback"/);
+assert.match(signInHtml, /scopes: \["username"\]/);
+assert.match(signInHtml, /Pi\.signIn\(\{ clientId: "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4", redirectUri: "https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback", scopes: \["username"\], state \}\)/);
+assert.match(signInHtml, /SIGNIN_CLICK/);
+assert.match(signInHtml, /STATE_CREATED/);
+assert.doesNotMatch(signInHtml, /scopes:\s*\[[^\]]*payments|createPayment|\/api\/pi\/auth|localStorage|document\.cookie/i);
+
+const signInCallback = await worker.fetch(new Request('https://example.test/signin/callback'), {
+  ASSETS: { fetch: async () => new Response('<html><body><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
+});
+const signInCallbackHtml = await signInCallback.text();
+assert.match(signInCallbackHtml, /data-pioneerhub-product-app/);
+assert.match(signInCallbackHtml, /pi_signin_diag_state/);
+assert.match(signInCallbackHtml, /window\.location\.hash|location\.hash/);
+assert.match(signInCallbackHtml, /CALLBACK_LOADED/);
+assert.match(signInCallbackHtml, /STATE_MISMATCH/);
+assert.match(signInCallbackHtml, /history\.replaceState\(null, '', window\.location\.pathname\)/);
+assert.match(signInCallbackHtml, /https:\/\/api\.minepi\.com\/v2\/me/);
+assert.ok(signInCallbackHtml.indexOf('if (!stateMatch)') < signInCallbackHtml.indexOf("const accessToken = fragment.get('access_token')"), 'Pi Sign-In state must validate before token use');
+assert.ok(signInCallbackHtml.indexOf('history.replaceState') < signInCallbackHtml.indexOf("fetch('https://api.minepi.com/v2/me'"), 'Pi Sign-In fragments must clear before /v2/me');
+assert.doesNotMatch(signInCallbackHtml, /createPayment|\/api\/pi\/auth|payments/i);
+
 let diagnosticAssetFetch = false;
 const diagnostic = await worker.fetch(new Request('https://example.test/diag/pi-auth'), {
   ASSETS: { fetch: async () => { diagnosticAssetFetch = true; return new Response('unreachable'); } },
