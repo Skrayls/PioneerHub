@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'visual-polish-v1';
+const FRONTEND_BUILD = 'community-signals-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -525,7 +525,14 @@ function bindLab() {
 }
 
 function bindCommunity() {
+  const contributionRoutes = {
+    'Scam%20report': '/prisidek#scam',
+    'App%20suggestion': '/prisidek#app',
+    'Guide%20idea': '/prisidek#guide',
+  };
   document.querySelectorAll('#community a').forEach((anchor) => {
+    const route = Object.entries(contributionRoutes).find(([subject]) => anchor.href.includes(subject))?.[1];
+    if (route) anchor.href = route;
     anchor.addEventListener('click', () => {
       if (anchor.dataset.event) {
         track(anchor.dataset.event);
@@ -555,9 +562,9 @@ bindCommunity();
 const startReturnScript = document.createElement('script');
 const visualPolishStyles = document.createElement('link');
 visualPolishStyles.rel = 'stylesheet';
-visualPolishStyles.href = '/visual-polish.css?v=visual-polish-v1';
+visualPolishStyles.href = '/visual-polish.css?v=community-signals-v1';
 document.head.append(visualPolishStyles);
-startReturnScript.src = '/start-return-v1.js?v=visual-polish-v1';
+startReturnScript.src = '/start-return-v1.js?v=community-signals-v1';
 document.head.append(startReturnScript);
 
 document.querySelectorAll('#lab a').forEach((anchor) => {
