@@ -4,7 +4,7 @@ import worker from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
 const [html, js, css, home, appJs, workerSource] = await Promise.all([
-  readFile(new URL('sauga.html', root), 'utf8'),
+  readFile(new URL('safety-center.html', root), 'utf8'),
   readFile(new URL('safety-center.js', root), 'utf8'),
   readFile(new URL('safety-center.css', root), 'utf8'),
   readFile(new URL('index.html', root), 'utf8'),
@@ -29,6 +29,6 @@ for (const route of ['/sauga', '/sauga/passphrase', '/sauga/itartina-nuoroda', '
     ASSETS: { fetch: async request => { assetPath = new URL(request.url).pathname; return new Response('<html>Safety Center</html>', { headers: { 'content-type': 'text/html' } }); } },
   });
   assert.equal(response.status, 200);
-  assert.equal(assetPath, '/sauga.html', `${route} must be directly routable`);
+  assert.equal(assetPath, '/safety-center.html', `${route} must be directly routable`);
   assert.match(response.headers.get('cache-control') || '', /no-store/);
 }

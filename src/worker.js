@@ -407,7 +407,7 @@ export default { async fetch(request, env) {
   const isSafetyCenterRoute = SAFETY_CENTER_ROUTES.has(url.pathname);
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
-    : isSafetyCenterRoute ? new Request(new URL("/sauga.html", request.url), request) : request;
+    : isSafetyCenterRoute ? new Request(new URL("/safety-center.html", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
