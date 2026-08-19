@@ -9,12 +9,12 @@ async function get(path) {
   return response;
 }
 
-const home = await get('/?build=pi-auth-settlement-r12');
+const home = await get('/?build=safety-center-v1');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
 const homeHtml = await home.text();
 assert.match(homeHtml, /PioneerHub/);
-assert.match(homeHtml, /Build: pi-auth-settlement-r12/);
-assert.match(homeHtml, /app\.js\?v=pi-auth-settlement-r12/);
+assert.match(homeHtml, /Build: safety-center-v1/);
+assert.match(homeHtml, /app\.js\?v=safety-center-v1/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
@@ -27,10 +27,10 @@ assert.match(home.headers.get('cache-control') || '', /no-store/, 'HTML shell mu
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
 assert.equal((await health.json()).status, 'ok');
-const css = await get('/styles.css?v=pi-auth-settlement-r12');
+const css = await get('/styles.css?v=safety-center-v1');
 assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /immutable/);
-const js = await get('/app.js?v=pi-auth-settlement-r12');
+const js = await get('/app.js?v=safety-center-v1');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
 assert.match(await js.text(), /FRONTEND-RUNTIME: PARKED/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
