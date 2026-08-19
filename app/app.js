@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'pi-auth-settlement-r12';
+const FRONTEND_BUILD = 'safety-center-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
