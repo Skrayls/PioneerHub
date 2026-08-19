@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'safety-center-v1';
+const FRONTEND_BUILD = 'app-radar-v2';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -309,7 +309,21 @@ function bindScamShield() {
 }
 
 function renderRadar() {
+  if (window.PioneerRadar?.renderHome) {
+    window.PioneerRadar.renderHome(document.querySelector('#radar .radar'), track);
+    return;
+  }
   const root = document.querySelector('#radar .radar');
+  if (root && !root.dataset.radarV2Loading) {
+    root.dataset.radarV2Loading = 'true';
+    root.innerHTML = '<p>Įkeliame App Radar…</p>';
+    const script = document.createElement('script');
+    script.src = '/radar-v2.js?v=app-radar-v2';
+    script.onload = () => renderRadar();
+    script.onerror = () => { root.textContent = 'App Radar šiuo metu nepasiekiamas.'; };
+    document.head.append(script);
+  }
+  if (!window.PioneerRadar) return;
 
   root.innerHTML = radarEntries.map((entry) => {
     const testClass = entry.testState === 'PIONEERHUB TESTED' ? 'tested' : 'not-tested';

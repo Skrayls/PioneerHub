@@ -10,6 +10,6 @@
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "durable_objects": { "bindings": [{ "name": "PAYMENT_LEDGER", "class_name": "PaymentLedger" }, { "name": "AUTH_SESSIONS", "class_name": "AuthSession" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PaymentLedger"] }, { "tag": "v2", "new_sqlite_classes": ["AuthSession"] }],
-  "vars": { "APP_ENV": "production", "PI_NETWORK": "testnet", "RELEASE_ID": "2026-08-19-safety-center-v1" },
+  "vars": { "APP_ENV": "production", "PI_NETWORK": "testnet", "RELEASE_ID": "2026-08-19-app-radar-v2" },
   "env": { "staging": { "name": "pioneerhub-staging", "workers_dev": true, "vars": { "APP_ENV": "staging", "PI_NETWORK": "testnet" }, "observability": { "enabled": true, "head_sampling_rate": 1 } } }
 }

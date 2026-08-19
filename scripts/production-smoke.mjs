@@ -9,12 +9,12 @@ async function get(path) {
   return response;
 }
 
-const home = await get('/?build=safety-center-v1');
+const home = await get('/?build=app-radar-v2');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
 const homeHtml = await home.text();
 assert.match(homeHtml, /PioneerHub/);
-assert.match(homeHtml, /Build: safety-center-v1/);
-assert.match(homeHtml, /app\.js\?v=safety-center-v1/);
+assert.match(homeHtml, /Build: app-radar-v2/);
+assert.match(homeHtml, /app\.js\?v=app-radar-v2/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
@@ -27,10 +27,10 @@ assert.match(home.headers.get('cache-control') || '', /no-store/, 'HTML shell mu
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
 assert.equal((await health.json()).status, 'ok');
-const css = await get('/styles.css?v=safety-center-v1');
+const css = await get('/styles.css?v=app-radar-v2');
 assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /immutable/);
-const js = await get('/app.js?v=safety-center-v1');
+const js = await get('/app.js?v=app-radar-v2');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
 assert.match(await js.text(), /FRONTEND-RUNTIME: PARKED/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
@@ -40,6 +40,13 @@ for (const route of ['/sauga', '/sauga/passphrase', '/sauga/itartina-nuoroda', '
   const safetyHtml = await safety.text();
   assert.match(safetyHtml, /PioneerHub Safety Center/);
   assert.doesNotMatch(safetyHtml, /Pi\.authenticate|createPayment|mainnet/i);
+}
+for (const route of ['/radar/metodika', '/radar/pi-browser', '/radar/pi-wallet', '/radar/fireside-forum', '/radar/pi-chats', '/radar/kyc', '/radar/pi-launchpad', '/radar/cidi-games']) {
+  const radar = await get(route);
+  assert.equal(radar.status, 200, `${route} must return HTTP 200`);
+  const radarHtml = await radar.text();
+  assert.match(radarHtml, /PioneerHub App Radar/);
+  assert.doesNotMatch(radarHtml, /Pi\.authenticate|createPayment/i);
 }
 const diagnostic = await get('/diag/pi-auth');
 assert.equal(diagnostic.status, 200, 'Pi auth diagnostic must return HTTP 200');
