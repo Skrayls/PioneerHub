@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'app-radar-v2';
+const FRONTEND_BUILD = 'learn-v2';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -238,6 +238,17 @@ function track(eventName) {
 
 function renderLearn(query = '') {
   const cards = document.querySelector('#learnCards');
+  if (window.PioneerLearn?.renderHome) { window.PioneerLearn.renderHome(cards, query, track); return; }
+  if (cards && !cards.dataset.learnV2Loading) {
+    cards.dataset.learnV2Loading = 'true';
+    cards.innerHTML = '<p>Įkeliame pilnus gidus…</p>';
+    const script = document.createElement('script');
+    script.src = '/learn-v2.js?v=learn-v2';
+    script.onload = () => renderLearn(query);
+    script.onerror = () => { cards.textContent = 'Gidai šiuo metu nepasiekiami.'; };
+    document.head.append(script);
+  }
+  if (!window.PioneerLearn) return;
   const filtered = topics.filter((topic) => topic.join(' ').toLowerCase().includes(query.toLowerCase()));
 
   cards.innerHTML = filtered.map(([title, description, category]) => `
