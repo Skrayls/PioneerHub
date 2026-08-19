@@ -32,7 +32,7 @@ assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /immutable/);
 const js = await get('/app.js?v=pi-auth-settlement-r12');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
-assert.match(await js.text(), /FRONTEND-RUNTIME: ACTIVE/);
+assert.match(await js.text(), /FRONTEND-RUNTIME: PARKED/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
 for (const route of ['/sauga', '/sauga/passphrase', '/sauga/itartina-nuoroda', '/sauga/pries-siunciant-pi']) {
   const safety = await get(route);
