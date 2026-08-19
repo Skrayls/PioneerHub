@@ -407,11 +407,12 @@ export default { async fetch(request, env) {
   const isSafetyCenterRoute = SAFETY_CENTER_ROUTES.has(url.pathname);
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
-    : isSafetyCenterRoute ? new Request(new URL("/safety-center.html", request.url), request) : request;
+    : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
+  if (isSafetyCenterRoute) headers.set("Content-Type", "text/html; charset=utf-8");
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
-  const isShell = response.headers.get("Content-Type")?.includes("text/html");
+  const isShell = isSafetyCenterRoute || response.headers.get("Content-Type")?.includes("text/html");
   const isVersionedAsset = url.searchParams.get("v") === FRONTEND_BUILD && url.pathname.match(/\.(?:css|js)$/);
   headers.set("Cache-Control", isShell ? "no-store" : isVersionedAsset ? "public, max-age=31536000, immutable" : response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
