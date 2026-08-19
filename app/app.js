@@ -23,6 +23,11 @@ const topics = [
   ['Pi Browser ir appsai', 'Kaip pradeti saugiai.', 'Appsai'],
   ['Dazni scamai', 'Signalai, del kuriu reikia sustoti.', 'Sauga'],
 ];
+const safetyGuideLinks = {
+  'Wallet passphrase': '/sauga/passphrase',
+  'Pi pavedimas': '/sauga/pries-siunciant-pi',
+  'Dazni scamai': '/sauga/itartina-nuoroda',
+};
 
 const checks = [
   'Ar tikrai zinau gaveja?',
@@ -240,7 +245,7 @@ function renderLearn(query = '') {
       <span>${category}</span>
       <h3>${title}</h3>
       <p>${description}</p>
-      <button data-topic="${title}">Skaityti santrauka</button>
+      ${safetyGuideLinks[title] ? `<a class="text-link" href="${safetyGuideLinks[title]}">Atidaryti saugos gidą →</a>` : `<button data-topic="${title}">Skaityti santrauka</button>`}
     </article>
   `).join('');
 
@@ -291,7 +296,8 @@ function bindScamShield() {
     const level = signals.has('passphrase') || signals.has('payment') ? 'critical' : signals.size > 0 ? 'high' : 'caution';
     const [title, body] = shieldAdvice[level];
     result.className = `shield-result ${level}`;
-    result.innerHTML = `<strong>${title}</strong><p>${body}</p><a class="text-link" href="https://minepi.com/safety/" target="_blank" rel="noreferrer">Atidaryti Pi Safety šaltinį ↗</a>`;
+    const next = level === 'critical' ? ['/sauga/passphrase', 'STOP: nevesk passphrase ir nesiųsk Pi.'] : level === 'high' ? ['/sauga/itartina-nuoroda', 'PAUSE: patikrink savarankiškai, ne per gautą nuorodą.'] : ['/sauga/pries-siunciant-pi', 'VERIFY: prieš veikdamas atlik 30 sekundžių patikrą.'];
+    result.innerHTML = `<strong>${title}</strong><p>${body}</p><p><strong>${next[1]}</strong></p><a class="text-link" href="${next[0]}#${level}">Atidaryti aiškų veiksmų planą →</a><br><a class="text-link" href="https://minepi.com/safety/" target="_blank" rel="noreferrer">Atidaryti Pi Safety šaltinį ↗</a>`;
     result.hidden = false;
     track('scam_shield_complete');
   });
@@ -446,7 +452,7 @@ async function handlePiSignInCallback() {
 function bindLab() {
   const lab = document.querySelector('#lab');
   if (!lab) return;
-  lab.innerHTML = `<div class="intro"><p class="eyebrow">PI INTEGRACIJA · TESTNET ONLY</p><h2>Testnet Payment Lab.</h2><p><strong>LIVE:</strong> įprastoje naršyklėje naudojamas Pi Sign-in su <code>username</code>; Pi Browser prašo native <code>username</code> ir <code>payments</code> scopes. Mokėjimas nekuriamas.</p><p class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: ACTIVE</p></div><div class="status-strip"><span class="state live">LIVE: dual Pi Auth testas</span><span class="state ready">READY: server verification ir duplicate protection</span><span class="state ready">PAYMENTS: užrakinta iki atskiros validacijos</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · TESTNET ONLY</span><h3>Patikrink Pi prisijungimą</h3><p>Nėra el. pašto, slaptažodžio ar wallet importo. Tokenas tikrinamas per serverinį <code>/me</code>; Pi Browser payment scope leidimo prašo tik native tapatybės patikrai, o passphrase niekada neprašoma ir nesaugoma.</p><button id="piAuth" class="button primary" type="button">Patikrinti Pi Auth</button><p id="piAuthStatus" class="note" aria-live="polite">Šis etapas tik patikrina tapatybę. Mokėjimo mygtukas užrakintas.</p></article><article><span class="badge">PAYMENT LAB · TESTNET ONLY</span><h3>Test-Pi užrakintas</h3><p>Native payment scope gali būti patvirtintas Pi Browser, bet Test-Pi užklausa šiame leidime nekuriama.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Laukiama atskiro Payment Lab leidimo</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo dar nesukūrėme.</p></article></div>`;
+  lab.innerHTML = `<div class="intro"><p class="eyebrow">TECHNINĖ DIAGNOSTIKA · TESTNET ONLY</p><h2>Testnet Payment Lab — užrakinta.</h2><p>Ši Testnet diagnostika nėra pagrindinio produkto dalis. Mokėjimas nekuriamas.</p><p class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: PARKED</p></div><div class="status-strip"><span class="state ready">DIAGNOSTIC: Pi Auth</span><span class="state ready">TESTNET: server verification</span><span class="state ready">PAYMENTS: užrakinta</span></div><div class="integration-grid"><article><span class="badge">PI AUTH · PARKED</span><h3>Pi Auth diagnostika</h3><p>Techninis Testnet patikrinimas. Pagrindinės PioneerHub funkcijos jo nereikalauja.</p><button id="piAuth" class="button" type="button">Atidaryti Pi Auth diagnostiką</button><p id="piAuthStatus" class="note" aria-live="polite">Mokėjimo mygtukas užrakintas.</p></article><article><span class="badge">PAYMENT LAB · LOCKED</span><h3>Test-Pi užrakintas</h3><p>Test-Pi užklausa šiame leidime nekuriama.</p><button id="piPayment" class="button" type="button" disabled aria-disabled="true">Mokėjimai užrakinti</button><p id="piPaymentStatus" class="note" aria-live="polite">Jokio mokėjimo nesukūrėme.</p></article></div>`;
   const auth = lab.querySelector('#piAuth');
   const authStatus = lab.querySelector('#piAuthStatus');
   let authInFlight = false;

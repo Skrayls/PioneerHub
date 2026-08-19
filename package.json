@@ -7,7 +7,7 @@
     "lint": "node --check app/app.js && node --check src/worker.js",
     "typecheck": "node --check app/tests/smoke.test.mjs",
     "secrets:scan": "node scripts/secret-scan.mjs",
-    "test": "node app/tests/smoke.test.mjs",
+    "test": "node --test app/tests/*.test.mjs",
     "smoke:production": "node scripts/production-smoke.mjs",
     "verify:app-radar": "node scripts/verify-app-radar.mjs",
     "build": "npm run lint && npm run typecheck && npm run secrets:scan && npm test",

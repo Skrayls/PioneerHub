@@ -8,7 +8,7 @@ const [html, js, css, workerSource] = await Promise.all([
   readFile(new URL('../../src/worker.js', import.meta.url), 'utf8'),
 ]);
 assert.match(html, /PioneerHub nėra Pi Network™/);
-assert.match(html, /30 sekundžių patikra/i);
+assert.match(html, /30 s/);
 assert.match(html, /PIONEERHUB SCAM SHIELD · NEMOKAMAS/);
 assert.match(html, /PioneerHub nieko neišsaugo/);
 assert.match(html, /wallet passphrase, seed frazės arba privataus rakto/);
@@ -16,11 +16,9 @@ assert.match(html, /BlackMerchanter/);
 assert.match(html, /Jei jau turi pakvietusį žmogų, rinkis jį/);
 assert.match(html, /data-event="referral_open"/);
 assert.match(html, /App Radar/);
-assert.match(html, /TESTNET/);
-assert.match(html, /LIVE/);
-assert.match(html, /READY: serverinis/);
-assert.match(html, /TESTNET INTEGRATION ACTIVE — AUTH TESTING/);
-assert.match(html, /Test-Pi užrakintas/);
+assert.match(html, /href="\/sauga"/);
+assert.match(html, /Testnet Payment Lab — užrakinta techninė diagnostika/);
+assert.doesNotMatch(html, /href="#lab"/);
 assert.doesNotMatch(html, /REQUIRES PI DEVELOPER PORTAL CONFIGURATION/);
 assert.match(html, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script>/);
 assert.doesNotMatch(html, /Pi\.init/);
