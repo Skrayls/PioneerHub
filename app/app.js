@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'start-return-v1';
+const FRONTEND_BUILD = 'visual-polish-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -553,7 +553,11 @@ handlePiSignInCallback();
 bindCommunity();
 
 const startReturnScript = document.createElement('script');
-startReturnScript.src = '/start-return-v1.js?v=start-return-v1';
+const visualPolishStyles = document.createElement('link');
+visualPolishStyles.rel = 'stylesheet';
+visualPolishStyles.href = '/visual-polish.css?v=visual-polish-v1';
+document.head.append(visualPolishStyles);
+startReturnScript.src = '/start-return-v1.js?v=visual-polish-v1';
 document.head.append(startReturnScript);
 
 document.querySelectorAll('#lab a').forEach((anchor) => {
