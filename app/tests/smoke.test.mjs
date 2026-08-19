@@ -31,7 +31,7 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const FRONTEND_BUILD = 'safety-center-v1'/);
+assert.match(js, /const FRONTEND_BUILD = 'app-radar-v2'/);
 assert.match(js, /PI_SIGNIN_CLIENT_ID/);
 assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
 assert.match(js, /response_type: 'token'/);
@@ -90,13 +90,13 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=safety-center-v1'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=app-radar-v2'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=safety-center-v1/);
-assert.match(shellHtml, /app\.js\?v=safety-center-v1/);
-assert.match(shellHtml, /Build: safety-center-v1/);
+assert.match(shellHtml, /styles\.css\?v=app-radar-v2/);
+assert.match(shellHtml, /app\.js\?v=app-radar-v2/);
+assert.match(shellHtml, /Build: app-radar-v2/);
 assert.match(shellHtml, /FRONTEND-RUNTIME: PENDING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
 
@@ -178,7 +178,7 @@ assert.match(diagnosticHtml, /accessTokenExists: Boolean\(result\?\.accessToken\
 assert.match(diagnosticHtml, /Testnet-only diagnostic\. Payments are locked\./);
 assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList|fetch\(|localStorage|sessionStorage/i);
 assert.doesNotMatch(diagnosticHtml, /render\([^\n]*accessToken[^\n]*\)/);
-assert.match(workerSource, /const FRONTEND_BUILD = "safety-center-v1";/, 'Safety Center product build marker must be current');
+assert.match(workerSource, /const FRONTEND_BUILD = "app-radar-v2";/, 'App Radar product build marker must be current');
 assert.match(workerSource, /PI_AUTH_DIAGNOSTIC_PATH = "\/diag\/pi-auth"/);
 
 const nativeFetchForAuth = globalThis.fetch;

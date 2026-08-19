@@ -3,13 +3,14 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "safety-center-v1";
+const FRONTEND_BUILD = "app-radar-v2";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
 const SAFETY_CENTER_ROUTES = new Set(["/sauga", "/sauga/passphrase", "/sauga/itartina-nuoroda", "/sauga/pries-siunciant-pi"]);
+const RADAR_ROUTES = new Set(["/radar/metodika", "/radar/pi-browser", "/radar/pi-wallet", "/radar/fireside-forum", "/radar/pi-chats", "/radar/kyc", "/radar/pi-launchpad", "/radar/cidi-games"]);
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -405,14 +406,16 @@ export default { async fetch(request, env) {
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
   const isSignInCallback = url.pathname === "/signin/callback";
   const isSafetyCenterRoute = SAFETY_CENTER_ROUTES.has(url.pathname);
+  const isRadarRoute = RADAR_ROUTES.has(url.pathname);
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
-    : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request) : request;
+    : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request)
+      : isRadarRoute ? new Request(new URL("/radar-shell.txt", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
-  if (isSafetyCenterRoute) headers.set("Content-Type", "text/html; charset=utf-8");
+  if (isSafetyCenterRoute || isRadarRoute) headers.set("Content-Type", "text/html; charset=utf-8");
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
-  const isShell = isSafetyCenterRoute || response.headers.get("Content-Type")?.includes("text/html");
+  const isShell = isSafetyCenterRoute || isRadarRoute || response.headers.get("Content-Type")?.includes("text/html");
   const isVersionedAsset = url.searchParams.get("v") === FRONTEND_BUILD && url.pathname.match(/\.(?:css|js)$/);
   headers.set("Cache-Control", isShell ? "no-store" : isVersionedAsset ? "public, max-age=31536000, immutable" : response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
@@ -425,6 +428,7 @@ export default { async fetch(request, env) {
       .replaceAll('href="styles.css"', `href="styles.css${version}"`)
       .replaceAll('href="shield.css"', `href="shield.css${version}"`)
       .replaceAll('href="brand.css"', `href="brand.css${version}"`)
+      .replaceAll('src="radar-v2.js"', `src="radar-v2.js${version}"`)
       .replaceAll('src="app.js"', isSignInCallback ? 'type="application/pioneerhub-product-app" data-pioneerhub-product-app' : `src="app.js${version}"`)
       .replaceAll("REQUIRES PI DEVELOPER PORTAL CONFIGURATION", "TESTNET INTEGRATION ACTIVE — AUTH TESTING")
       .replace("PioneerHub dar nejungia Pi prisijungimo ar realiu mokejimu.", "Pi Developer Portal, domain verification, PiNet ir serverio Testnet raktas yra sukonfiguruoti. Mokėjimas lieka užrakintas iki patikrinto prisijungimo.")
