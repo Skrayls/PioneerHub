@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "learn-v2";
+const FRONTEND_BUILD = "start-return-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
@@ -425,7 +425,7 @@ export default { async fetch(request, env) {
   if (isShell) {
     const version = `?v=${FRONTEND_BUILD}`;
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
-    const shellStatus = `<aside class="note" data-testid="frontend-build">TESTNET INTEGRATION ACTIVE — AUTH TESTING · Build: ${FRONTEND_BUILD} · FRONTEND-RUNTIME: PENDING</aside>`;
+    const shellStatus = `<!-- PioneerHub build: ${FRONTEND_BUILD}; technical status is available through /healthz and diagnostic routes. -->`;
     if (isSignInCallback) headers.set("Content-Security-Policy", securityHeaders["Content-Security-Policy"].replace("script-src 'self' https://sdk.minepi.com;", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`));
     const html = (await response.text())
       .replaceAll('href="styles.css"', `href="styles.css${version}"`)
