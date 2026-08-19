@@ -31,7 +31,9 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const FRONTEND_BUILD = 'visual-polish-v1'/);
+assert.match(js, /const FRONTEND_BUILD = 'mua-measurement-v1'/);
+assert.match(js, /visual-polish\.css\?v=mua-measurement-v1/);
+assert.match(js, /start-return-v1\.js\?v=mua-measurement-v1/);
 assert.match(js, /PI_SIGNIN_CLIENT_ID/);
 assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
 assert.match(js, /response_type: 'token'/);
@@ -90,12 +92,12 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=visual-polish-v1'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=mua-measurement-v1'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=visual-polish-v1/);
-assert.match(shellHtml, /app\.js\?v=visual-polish-v1/);
+assert.match(shellHtml, /styles\.css\?v=mua-measurement-v1/);
+assert.match(shellHtml, /app\.js\?v=mua-measurement-v1/);
 assert.doesNotMatch(shellHtml, /Build:/);
 assert.doesNotMatch(shellHtml, /FRONTEND-RUNTIME: PENDING|AUTH TESTING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
@@ -178,7 +180,7 @@ assert.match(diagnosticHtml, /accessTokenExists: Boolean\(result\?\.accessToken\
 assert.match(diagnosticHtml, /Testnet-only diagnostic\. Payments are locked\./);
 assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList|fetch\(|localStorage|sessionStorage/i);
 assert.doesNotMatch(diagnosticHtml, /render\([^\n]*accessToken[^\n]*\)/);
-assert.match(workerSource, /const FRONTEND_BUILD = "visual-polish-v1";/, 'Visual polish build marker must be current');
+assert.match(workerSource, /const FRONTEND_BUILD = "mua-measurement-v1";/, 'MUA measurement build marker must be current');
 assert.match(workerSource, /PI_AUTH_DIAGNOSTIC_PATH = "\/diag\/pi-auth"/);
 
 const nativeFetchForAuth = globalThis.fetch;
@@ -221,17 +223,21 @@ assert.equal(validationFile.headers.get('referrer-policy'), 'no-referrer');
 assert.equal(validationFile.headers.get('x-frame-options'), 'DENY');
 assert.match(validationFile.headers.get('content-security-policy'), /default-src 'none'/);
 
-const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+const recordedMua = [];
+const muaEnv = { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', RELEASE_ID: '2026-08-19-mua-measurement-v1', MUA_EVENTS: { writeDataPoint: data => recordedMua.push(data) } };
+const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), muaEnv);
 assert.equal(event.status, 204);
+assert.deepEqual(recordedMua, [{ indexes: ['safety_check_complete'], blobs: ['safety_check_complete', '2026-08-19-mua-measurement-v1'], doubles: [1] }]);
 
-const shieldEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+const shieldEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete' }), muaEnv);
 assert.equal(shieldEvent.status, 204);
 
-const referralEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'referral_open' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+const referralEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'referral_open' }), muaEnv);
 assert.equal(referralEvent.status, 204);
 
-const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
+const arbitraryEvent = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'scam_shield_complete:wallet-or-user-data' }), muaEnv);
 assert.equal(arbitraryEvent.status, 204);
+assert.equal(recordedMua.length, 3, 'arbitrary event payloads must not be persisted');
 
 const piStatus = await worker.fetch(new Request('https://example.test/api/pi/status'), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production', PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {} });
 assert.deepEqual(await piStatus.json(), { network: 'testnet', auth: 'ready', payments: 'ready' });

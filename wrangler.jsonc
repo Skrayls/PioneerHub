@@ -7,9 +7,10 @@
   "workers_dev": true,
   "preview_urls": true,
   "assets": { "directory": "./app", "binding": "ASSETS", "run_worker_first": true },
+  "analytics_engine_datasets": [{ "binding": "MUA_EVENTS", "dataset": "pioneerhub_mua_events" }],
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "durable_objects": { "bindings": [{ "name": "PAYMENT_LEDGER", "class_name": "PaymentLedger" }, { "name": "AUTH_SESSIONS", "class_name": "AuthSession" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PaymentLedger"] }, { "tag": "v2", "new_sqlite_classes": ["AuthSession"] }],
-  "vars": { "APP_ENV": "production", "PI_NETWORK": "testnet", "RELEASE_ID": "2026-08-19-visual-polish-v1" },
-  "env": { "staging": { "name": "pioneerhub-staging", "workers_dev": true, "vars": { "APP_ENV": "staging", "PI_NETWORK": "testnet" }, "observability": { "enabled": true, "head_sampling_rate": 1 } } }
+  "vars": { "APP_ENV": "production", "PI_NETWORK": "testnet", "RELEASE_ID": "2026-08-19-mua-measurement-v1" },
+  "env": { "staging": { "name": "pioneerhub-staging", "workers_dev": true, "vars": { "APP_ENV": "staging", "PI_NETWORK": "testnet", "RELEASE_ID": "2026-08-19-mua-measurement-v1-staging" }, "analytics_engine_datasets": [{ "binding": "MUA_EVENTS", "dataset": "pioneerhub_mua_events_staging" }], "observability": { "enabled": true, "head_sampling_rate": 1 } } }
 }

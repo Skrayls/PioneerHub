@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "visual-polish-v1";
+const FRONTEND_BUILD = "mua-measurement-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
@@ -12,6 +12,17 @@ const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev
 const SAFETY_CENTER_ROUTES = new Set(["/sauga", "/sauga/passphrase", "/sauga/itartina-nuoroda", "/sauga/pries-siunciant-pi"]);
 const RADAR_ROUTES = new Set(["/radar/metodika", "/radar/pi-browser", "/radar/pi-wallet", "/radar/fireside-forum", "/radar/pi-chats", "/radar/kyc", "/radar/pi-launchpad", "/radar/cidi-games"]);
 const LEARN_ROUTES = new Set(["/mokykis/pi-network", "/mokykis/balanso-busenos", "/mokykis/perkeltas-balansas", "/mokykis/perkeliamas-balansas", "/mokykis/nepatvirtintas-balansas", "/mokykis/mainnet", "/mokykis/pi-wallet", "/mokykis/kyc", "/mokykis/mainnet-checklist", "/mokykis/lockup", "/mokykis/referral-team", "/mokykis/security-circle", "/mokykis/kyc-validator", "/mokykis/node", "/mokykis/pi-browser-apps"]);
+const MUA_EVENTS = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
+
+function recordMuaEvent(env, event) {
+  // Only a fixed event label and release identifier are retained. The index is the
+  // event name, never an individual or browser-derived value.
+  env.MUA_EVENTS?.writeDataPoint({
+    indexes: [event],
+    blobs: [event, env.RELEASE_ID || "unmarked"],
+    doubles: [1],
+  });
+}
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -377,8 +388,10 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
-    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
-    if (allowed.has(event)) console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
+    if (MUA_EVENTS.has(event)) {
+      console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
+      recordMuaEvent(env, event);
+    }
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }
   if (url.pathname === "/healthz") return json({ status: "ok", service: "pioneerhub", environment: env.APP_ENV, release: env.RELEASE_ID || "unmarked" });

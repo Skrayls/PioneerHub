@@ -8,7 +8,8 @@
 
 - Telemetry emission: live.
 - Privacy boundary: validated.
-- Persisted/queryable observability reception: still open.
+- Aggregate storage: Workers Analytics Engine dataset `pioneerhub_mua_events`.
+- Retention: three months; no identity or per-user data is stored.
 
 ## Allowlisted event taxonomy
 
@@ -32,7 +33,9 @@ The Worker accepts only an exact event-name body at `POST /events`.
 
 - JSON is not parsed.
 - Arbitrary payload fields are discarded by design.
-- Accepted logs contain only `event`, `kind: "mua"`, and deployment `version`.
+- The aggregate dataset receives only an allowlisted event name, release ID, and
+  count value. Its sampling index is the event name, not a person, device, or
+  browser-derived value.
 
 Not accepted intentionally:
 
@@ -48,8 +51,14 @@ Not accepted intentionally:
 
 ## MUA semantics
 
-Current v1 definition:
+Current definition:
 
 - one accepted allowlisted event = one useful action event occurrence.
 - this version does not create user identity, deduplication, or cross-session profiles.
-- before broad public acquisition, PioneerHub still needs one reliable aggregation/query path for monthly counts.
+- Counts are directional usage signals, not unique-user, attribution, or fraud-resistant metrics.
+
+## Query boundary
+
+The dataset is queried only by authorised project operators through Cloudflare's
+aggregate analytics tools. It has no public endpoint and does not power user
+profiles, targeting, advertising, or automated decisions.
