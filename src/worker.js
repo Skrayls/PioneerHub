@@ -9,6 +9,7 @@ const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
+const SAFETY_CENTER_ROUTES = new Set(["/sauga", "/sauga/passphrase", "/sauga/itartina-nuoroda", "/sauga/pries-siunciant-pi"]);
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -403,7 +404,10 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
   const isSignInCallback = url.pathname === "/signin/callback";
-  const assetRequest = isSignInCallback ? new Request(new URL("/", request.url), request) : request;
+  const isSafetyCenterRoute = SAFETY_CENTER_ROUTES.has(url.pathname);
+  const assetRequest = isSignInCallback
+    ? new Request(new URL("/", request.url), request)
+    : isSafetyCenterRoute ? new Request(new URL("/sauga.html", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");

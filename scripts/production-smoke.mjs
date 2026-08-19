@@ -34,6 +34,13 @@ const js = await get('/app.js?v=pi-auth-settlement-r12');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
 assert.match(await js.text(), /FRONTEND-RUNTIME: ACTIVE/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
+for (const route of ['/sauga', '/sauga/passphrase', '/sauga/itartina-nuoroda', '/sauga/pries-siunciant-pi']) {
+  const safety = await get(route);
+  assert.equal(safety.status, 200, `${route} must return HTTP 200`);
+  const safetyHtml = await safety.text();
+  assert.match(safetyHtml, /PioneerHub Safety Center/);
+  assert.doesNotMatch(safetyHtml, /Pi\.authenticate|createPayment|mainnet/i);
+}
 const diagnostic = await get('/diag/pi-auth');
 assert.equal(diagnostic.status, 200, 'Pi auth diagnostic must return HTTP 200');
 const diagnosticHtml = await diagnostic.text();
