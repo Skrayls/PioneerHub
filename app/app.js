@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'learn-v2';
+const FRONTEND_BUILD = 'start-return-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -551,6 +551,10 @@ renderRadar();
 bindLab();
 handlePiSignInCallback();
 bindCommunity();
+
+const startReturnScript = document.createElement('script');
+startReturnScript.src = '/start-return-v1.js?v=start-return-v1';
+document.head.append(startReturnScript);
 
 document.querySelectorAll('#lab a').forEach((anchor) => {
   anchor.addEventListener('click', () => track('community_cta'));
