@@ -94,11 +94,25 @@ const shell = await worker.fetch(new Request('https://example.test/?build=app-in
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /styles\.css\?v=app-inspector-v1/);
-assert.match(shellHtml, /app\.js\?v=app-inspector-v1/);
+assert.match(shellHtml, /href="\/styles\.css\?v=app-inspector-v1"/);
+assert.match(shellHtml, /src="\/app\.js\?v=app-inspector-v1"/);
 assert.doesNotMatch(shellHtml, /Build:/);
 assert.doesNotMatch(shellHtml, /FRONTEND-RUNTIME: PENDING|AUTH TESTING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
+
+for (const [route, shellSource, assets] of [
+  ['/sauga/passphrase', '<link href="styles.css"><link href="safety-center.css"><script src="safety-center.js"></script>', ['/styles.css', '/safety-center.css', '/safety-center.js']],
+  ['/pervedimo-repeticija', '<link href="styles.css"><link href="brand.css"><link href="transfer-rehearsal.css"><script src="transfer-rehearsal.js"></script>', ['/styles.css', '/brand.css', '/transfer-rehearsal.css', '/transfer-rehearsal.js']],
+  ['/kyc-busena', '<link href="styles.css"><link href="brand.css"><link href="kyc-status-navigator.css"><script src="kyc-status-navigator.js"></script>', ['/styles.css', '/brand.css', '/kyc-status-navigator.css', '/kyc-status-navigator.js']],
+  ['/app-paleidimo-checklist', '<link href="styles.css"><link href="brand.css"><link href="app-launch-checklist.css"><script src="app-launch-checklist.js"></script>', ['/styles.css', '/brand.css', '/app-launch-checklist.css', '/app-launch-checklist.js']],
+]) {
+  const routeShell = await worker.fetch(new Request(`https://example.test${route}`), {
+    ASSETS: { fetch: async () => new Response(`<html><head>${shellSource}</head><body></body></html>`, { headers: { 'content-type': 'text/plain' } }) },
+  });
+  const routeHtml = await routeShell.text();
+  for (const asset of assets) assert.match(routeHtml, new RegExp(`(?:href|src)="${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=app-inspector-v1"`), `${route} must emit root-relative ${asset}`);
+  assert.doesNotMatch(routeHtml, /(?:href|src)="(?!\/|https?:)[^"]+\.(?:css|js)\?v=/, `${route} must not emit relative required assets`);
+}
 
 let callbackAssetPath;
 const callback = await worker.fetch(new Request('https://example.test/signin/callback'), {

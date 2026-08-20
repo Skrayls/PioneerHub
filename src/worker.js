@@ -16,6 +16,7 @@ const COMMUNITY_ROUTE = "/prisidek";
 const APP_INSPECTOR_ROUTE = "/tikrinti-nuoroda";
 const TRANSFER_REHEARSAL_ROUTE = "/pervedimo-repeticija";
 const KYC_STATUS_NAVIGATOR_ROUTE = "/kyc-busena";
+const APP_LAUNCH_CHECKLIST_ROUTE = "/app-paleidimo-checklist";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -417,6 +418,7 @@ export default { async fetch(request, env) {
   const isAppInspectorRoute = url.pathname === APP_INSPECTOR_ROUTE;
   const isTransferRehearsalRoute = url.pathname === TRANSFER_REHEARSAL_ROUTE;
   const isKycStatusNavigatorRoute = url.pathname === KYC_STATUS_NAVIGATOR_ROUTE;
+  const isAppLaunchChecklistRoute = url.pathname === APP_LAUNCH_CHECKLIST_ROUTE;
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
     : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request)
@@ -425,12 +427,13 @@ export default { async fetch(request, env) {
           : isCommunityRoute ? new Request(new URL("/community-shell.txt", request.url), request)
             : isAppInspectorRoute ? new Request(new URL("/app-inspector-shell.txt", request.url), request)
               : isTransferRehearsalRoute ? new Request(new URL("/transfer-rehearsal-shell.txt", request.url), request)
-                : isKycStatusNavigatorRoute ? new Request(new URL("/kyc-status-navigator-shell.txt", request.url), request) : request;
+                : isKycStatusNavigatorRoute ? new Request(new URL("/kyc-status-navigator-shell.txt", request.url), request)
+                  : isAppLaunchChecklistRoute ? new Request(new URL("/app-launch-checklist-shell.txt", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
-  if (isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || isKycStatusNavigatorRoute) headers.set("Content-Type", "text/html; charset=utf-8");
+  if (isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || isKycStatusNavigatorRoute || isAppLaunchChecklistRoute) headers.set("Content-Type", "text/html; charset=utf-8");
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
-  const isShell = isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || isKycStatusNavigatorRoute || response.headers.get("Content-Type")?.includes("text/html");
+  const isShell = isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || isKycStatusNavigatorRoute || isAppLaunchChecklistRoute || response.headers.get("Content-Type")?.includes("text/html");
   const isVersionedAsset = url.searchParams.get("v") === FRONTEND_BUILD && url.pathname.match(/\.(?:css|js)$/);
   headers.set("Cache-Control", isShell ? "no-store" : isVersionedAsset ? "public, max-age=31536000, immutable" : response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
@@ -440,20 +443,24 @@ export default { async fetch(request, env) {
     const shellStatus = `<!-- PioneerHub build: ${FRONTEND_BUILD}; technical status is available through /healthz and diagnostic routes. -->`;
     if (isSignInCallback) headers.set("Content-Security-Policy", securityHeaders["Content-Security-Policy"].replace("script-src 'self' https://sdk.minepi.com;", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`));
     const html = (await response.text())
-      .replaceAll('href="styles.css"', `href="styles.css${version}"`)
-      .replaceAll('href="shield.css"', `href="shield.css${version}"`)
-      .replaceAll('href="brand.css"', `href="brand.css${version}"`)
-      .replaceAll('src="radar-v2.js"', `src="radar-v2.js${version}"`)
-      .replaceAll('src="learn-v2.js"', `src="learn-v2.js${version}"`)
-      .replaceAll('href="community-signals.css"', `href="community-signals.css${version}"`)
-      .replaceAll('src="community-signals.js"', `src="community-signals.js${version}"`)
-      .replaceAll('href="app-inspector.css"', `href="app-inspector.css${version}"`)
-      .replaceAll('src="app-inspector.js"', `src="app-inspector.js${version}"`)
-      .replaceAll('href="transfer-rehearsal.css"', `href="transfer-rehearsal.css${version}"`)
-      .replaceAll('src="transfer-rehearsal.js"', `src="transfer-rehearsal.js${version}"`)
-      .replaceAll('href="kyc-status-navigator.css"', `href="kyc-status-navigator.css${version}"`)
-      .replaceAll('src="kyc-status-navigator.js"', `src="kyc-status-navigator.js${version}"`)
-      .replaceAll('src="app.js"', isSignInCallback ? 'type="application/pioneerhub-product-app" data-pioneerhub-product-app' : `src="app.js${version}"`)
+      .replaceAll('href="styles.css"', `href="/styles.css${version}"`)
+      .replaceAll('href="safety-center.css"', `href="/safety-center.css${version}"`)
+      .replaceAll('src="safety-center.js"', `src="/safety-center.js${version}"`)
+      .replaceAll('href="shield.css"', `href="/shield.css${version}"`)
+      .replaceAll('href="brand.css"', `href="/brand.css${version}"`)
+      .replaceAll('src="radar-v2.js"', `src="/radar-v2.js${version}"`)
+      .replaceAll('src="learn-v2.js"', `src="/learn-v2.js${version}"`)
+      .replaceAll('href="community-signals.css"', `href="/community-signals.css${version}"`)
+      .replaceAll('src="community-signals.js"', `src="/community-signals.js${version}"`)
+      .replaceAll('href="app-inspector.css"', `href="/app-inspector.css${version}"`)
+      .replaceAll('src="app-inspector.js"', `src="/app-inspector.js${version}"`)
+      .replaceAll('href="transfer-rehearsal.css"', `href="/transfer-rehearsal.css${version}"`)
+      .replaceAll('src="transfer-rehearsal.js"', `src="/transfer-rehearsal.js${version}"`)
+      .replaceAll('href="kyc-status-navigator.css"', `href="/kyc-status-navigator.css${version}"`)
+      .replaceAll('src="kyc-status-navigator.js"', `src="/kyc-status-navigator.js${version}"`)
+      .replaceAll('href="app-launch-checklist.css"', `href="/app-launch-checklist.css${version}"`)
+      .replaceAll('src="app-launch-checklist.js"', `src="/app-launch-checklist.js${version}"`)
+      .replaceAll('src="app.js"', isSignInCallback ? 'type="application/pioneerhub-product-app" data-pioneerhub-product-app' : `src="/app.js${version}"`)
       .replaceAll("REQUIRES PI DEVELOPER PORTAL CONFIGURATION", "TESTNET INTEGRATION ACTIVE — AUTH TESTING")
       .replace("PioneerHub dar nejungia Pi prisijungimo ar realiu mokejimu.", "Pi Developer Portal, domain verification, PiNet ir serverio Testnet raktas yra sukonfiguruoti. Mokėjimas lieka užrakintas iki patikrinto prisijungimo.")
       .replace("Pi loginas nėra aktyvus", "Pi loginas tikrinamas Testnet aplinkoje")

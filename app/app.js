@@ -269,6 +269,7 @@ function renderLearn(query = '') {
 
 function renderSafety() {
   const list = document.querySelector('#checklist');
+  if (!list) return;
   list.innerHTML = checks.map((check, index) => `
     <label>
       <input type="checkbox" data-check="${index}">

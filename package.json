@@ -9,6 +9,7 @@
     "secrets:scan": "node scripts/secret-scan.mjs",
     "test": "node --test app/tests/*.test.mjs",
     "smoke:production": "node scripts/production-smoke.mjs",
+    "qa:rendered": "node scripts/rendered-route-qa.mjs",
     "verify:app-radar": "node scripts/verify-app-radar.mjs",
     "build": "npm run lint && npm run typecheck && npm run secrets:scan && npm test",
     "dev": "wrangler dev",
@@ -17,6 +18,7 @@
     "validate:pi-boundary": "node scripts/validate-pi-boundary.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "wrangler": "^4.123.0"
   }
 }

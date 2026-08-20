@@ -1,11 +1,11 @@
 # PioneerHub project state
 
-- Production main: `07d463134d1087f627087846039c3672808235b3` (KYC Status Navigator V1).
+- Production main: `e9d367b` (KYC Status Navigator V1 release record).
 - Production release: KYC Status Navigator V1, deployed and smoke-verified 2026-08-20 at `https://pioneerhub.andriussimonaitis.workers.dev` (Worker version `402bbe32-692b-4cdc-98b1-5abd94f15e77`). The anonymous `/kyc-busena` route returned HTTP 200 with the expected KYC navigator content and production security headers.
 - Completed: Safety Center V1, App Radar V2, Learn V2, Start + Return V1, Visual Polish V1, Community Signals V1, Pi App Inspector V1, Pi Transfer Rehearsal V1, KYC Status Navigator V1. PR #52 merged after exact-head GitHub CI and Workers Build passed; merged `main` also passed full local validation, Worker dry-run and Pi-boundary validation before deployment.
-- Active milestone: Pi App Launch Checklist V1 — selected after the KYC release; implementation has not started and no PR is pending. It will be a browser-only fixed-choice preflight for Pi app builders, producing a bounded launch-readiness checklist without collecting app credentials, developer identifiers, URLs, screenshots, analytics, or user data. It must not imply Pi approval or replace official Pi Developer Portal requirements.
+- P0 active: production UI recovery. Public nested routes were emitting relative CSS/JS paths (for example `/sauga/styles.css`) that return 404. The in-progress feature branch now applies a systemic root-relative shell asset fix and adds a Playwright rendered mobile/asset-integrity gate for every public route. This is not released or production-verified yet; no feature work may proceed until the exact-head production gate is PASS.
 - Completed post-release reassessment (2026-08-20): selected the portfolio's Pi app launch checklist candidate because it adds a differentiated developer-side Pi utility and advances the product-engine path, while avoiding duplicate consumer guidance. Human Preflight: `HUMAN_ACTION_REQUIRED=false`; a fixed local-rendering V1 needs no dependency, Cloudflare binding, secret, Pi Developer Portal change, payment, personal-data processing, legal decision, or spending. App Radar notifier remains deferred because automated communications require owner approval.
-- Next work package: create the Pi App Launch Checklist V1 feature branch and implement one bounded browser-only checklist slice with focused tests.
+- Next work package: run the rendered gate successfully in CI, push/PR the P0 fix, merge/deploy exact head, then record per-route rendered production PASS evidence in `docs/PRODUCTION_ROUTE_QA.md`.
 - Parked: MUA Measurement V1; Cloudflare Workers Builds visibility/capability blocker, GitHub issue #48.
 - Pi auth: diagnostic/Testnet technical debt; not required by core product and not under active work.
 - Payments: locked. `createPayment` absent from product client. Mainnet: absent.
