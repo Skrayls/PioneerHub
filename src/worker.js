@@ -14,6 +14,7 @@ const RADAR_ROUTES = new Set(["/radar/metodika", "/radar/pi-browser", "/radar/pi
 const LEARN_ROUTES = new Set(["/mokykis/pi-network", "/mokykis/balanso-busenos", "/mokykis/perkeltas-balansas", "/mokykis/perkeliamas-balansas", "/mokykis/nepatvirtintas-balansas", "/mokykis/mainnet", "/mokykis/pi-wallet", "/mokykis/kyc", "/mokykis/mainnet-checklist", "/mokykis/lockup", "/mokykis/referral-team", "/mokykis/security-circle", "/mokykis/kyc-validator", "/mokykis/node", "/mokykis/pi-browser-apps"]);
 const COMMUNITY_ROUTE = "/prisidek";
 const APP_INSPECTOR_ROUTE = "/tikrinti-nuoroda";
+const TRANSFER_REHEARSAL_ROUTE = "/pervedimo-repeticija";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -379,7 +380,7 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
-    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
+    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "transfer_rehearsal_start", "transfer_rehearsal_complete", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
     if (allowed.has(event)) console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }
@@ -413,18 +414,20 @@ export default { async fetch(request, env) {
   const isLearnRoute = LEARN_ROUTES.has(url.pathname);
   const isCommunityRoute = url.pathname === COMMUNITY_ROUTE;
   const isAppInspectorRoute = url.pathname === APP_INSPECTOR_ROUTE;
+  const isTransferRehearsalRoute = url.pathname === TRANSFER_REHEARSAL_ROUTE;
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
     : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request)
       : isRadarRoute ? new Request(new URL("/radar-shell.txt", request.url), request)
         : isLearnRoute ? new Request(new URL("/learn-shell.txt", request.url), request)
           : isCommunityRoute ? new Request(new URL("/community-shell.txt", request.url), request)
-            : isAppInspectorRoute ? new Request(new URL("/app-inspector-shell.txt", request.url), request) : request;
+            : isAppInspectorRoute ? new Request(new URL("/app-inspector-shell.txt", request.url), request)
+              : isTransferRehearsalRoute ? new Request(new URL("/transfer-rehearsal-shell.txt", request.url), request) : request;
   const response = await env.ASSETS.fetch(assetRequest);
   const headers = new Headers(response.headers);
-  if (isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute) headers.set("Content-Type", "text/html; charset=utf-8");
+  if (isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute) headers.set("Content-Type", "text/html; charset=utf-8");
   Object.entries(securityHeaders).forEach(([key, value]) => headers.set(key, value)); headers.delete("X-Frame-Options");
-  const isShell = isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || response.headers.get("Content-Type")?.includes("text/html");
+  const isShell = isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || response.headers.get("Content-Type")?.includes("text/html");
   const isVersionedAsset = url.searchParams.get("v") === FRONTEND_BUILD && url.pathname.match(/\.(?:css|js)$/);
   headers.set("Cache-Control", isShell ? "no-store" : isVersionedAsset ? "public, max-age=31536000, immutable" : response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
   if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
@@ -443,6 +446,8 @@ export default { async fetch(request, env) {
       .replaceAll('src="community-signals.js"', `src="community-signals.js${version}"`)
       .replaceAll('href="app-inspector.css"', `href="app-inspector.css${version}"`)
       .replaceAll('src="app-inspector.js"', `src="app-inspector.js${version}"`)
+      .replaceAll('href="transfer-rehearsal.css"', `href="transfer-rehearsal.css${version}"`)
+      .replaceAll('src="transfer-rehearsal.js"', `src="transfer-rehearsal.js${version}"`)
       .replaceAll('src="app.js"', isSignInCallback ? 'type="application/pioneerhub-product-app" data-pioneerhub-product-app' : `src="app.js${version}"`)
       .replaceAll("REQUIRES PI DEVELOPER PORTAL CONFIGURATION", "TESTNET INTEGRATION ACTIVE — AUTH TESTING")
       .replace("PioneerHub dar nejungia Pi prisijungimo ar realiu mokejimu.", "Pi Developer Portal, domain verification, PiNet ir serverio Testnet raktas yra sukonfiguruoti. Mokėjimas lieka užrakintas iki patikrinto prisijungimo.")
