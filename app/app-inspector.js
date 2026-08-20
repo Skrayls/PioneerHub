@@ -1,11 +1,6 @@
 (() => {
-  const knownOfficial = new Map([
-    ['minepi.com', { label: 'Pi Network', route: 'https://minepi.com/safety/' }],
-    ['wallet.pinet.com', { label: 'Pi Wallet', route: '/radar/pi-wallet' }],
-    ['kyc.pinet.com', { label: 'Pi KYC', route: '/radar/kyc' }],
-    ['fireside.pinet.com', { label: 'Fireside Forum', route: '/radar/fireside-forum' }],
-    ['chat.pinet.com', { label: 'Pi Chats', route: '/radar/pi-chats' }],
-  ]);
+  const evidence = window.PioneerEvidence;
+  if (!evidence) throw new Error('PioneerEvidence must load before App Inspector');
   const form = document.querySelector('#appInspector');
   const field = document.querySelector('#inspectorUrl');
   const result = document.querySelector('#inspectorResult');
@@ -36,9 +31,12 @@
     if (signals.length) {
       render({ state: 'stop', title: 'Sustok ir tikrink kitu keliu.', paragraphs: ['Rasti signalai nereiškia, kad tai būtinai scam, tačiau jų pakanka nepasitikėti gauta nuoroda. Oficialių Pi vietų ieškok pats, ne per šią nuorodą.'], signals, action: { href: '/sauga/itartina-nuoroda', text: 'Atidaryti saugų veiksmų gidą →' } }); return;
     }
-    const official = knownOfficial.get(url.hostname);
-    if (official) {
-      render({ state: 'known', title: `Atpažintas viešas oficialus adresas: ${official.label}.`, paragraphs: ['Domenas sutampa su ribotu PioneerHub viešų oficialių adresų sąrašu. Tai nepatvirtina kiekvieno puslapio, paskyros ar veiksmų saugumo.', 'Passphrase įvesk tik wallet.pinet.com ir niekada jos nesiųsk niekam.'], action: { href: official.route, text: `Peržiūrėti ${official.label} kontekstą →` } }); return;
+    const record = evidence.findByHostname(url.hostname);
+    if (record) {
+      const freshness = evidence.freshnessFor(record.lastReviewed);
+      const state = evidence.states[record.evidenceState];
+      const source = record.sources[0];
+      render({ state: 'known', title: `Rastas PioneerHub Radar įrodymų įrašas: ${record.name}.`, paragraphs: [`Normalizuotas domenas: ${url.hostname}.`, `Įrodymų būsena: ${state.label}. Peržiūrėta: ${record.lastReviewed}; ${freshness.label}.`, `Šaltinis: ${source.label}. Ribos: ${record.limitations}`, 'Tai nepatvirtina kiekvieno puslapio, paskyros ar veiksmų saugumo. Passphrase įvesk tik wallet.pinet.com ir niekada jos nesiųsk niekam.'], action: { href: `/radar/${record.slug}`, text: `Peržiūrėti ${record.name} įrodymus →` } }); return;
     }
     render({ state: 'caution', title: 'Šio domeno PioneerHub neatpažįsta.', paragraphs: ['Tai nėra įrodymas, kad nuoroda bloga, ir nėra saugumo patvirtinimas. PioneerHub jos neatidarė ir nepatikrino programėlės elgesio.', 'Jei nuoroda atėjo žinute, neskubėk: atsidaryk oficialų Pi šaltinį pats arba patikrink signalus Scam Shield.'], action: { href: '/#shield', text: 'Atidaryti Scam Shield →' } });
   });

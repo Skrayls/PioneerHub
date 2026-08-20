@@ -329,11 +329,21 @@ function renderRadar() {
   if (root && !root.dataset.radarV2Loading) {
     root.dataset.radarV2Loading = 'true';
     root.innerHTML = '<p>Įkeliame App Radar…</p>';
-    const script = document.createElement('script');
-    script.src = '/radar-v2.js?v=app-radar-v2';
-    script.onload = () => renderRadar();
-    script.onerror = () => { root.textContent = 'App Radar šiuo metu nepasiekiamas.'; };
-    document.head.append(script);
+    const loadRadar = () => {
+      const script = document.createElement('script');
+      script.src = '/radar-v2.js?v=app-radar-v2';
+      script.onload = () => renderRadar();
+      script.onerror = () => { root.textContent = 'App Radar šiuo metu nepasiekiamas.'; };
+      document.head.append(script);
+    };
+    if (window.PioneerEvidence) loadRadar();
+    else {
+      const evidenceScript = document.createElement('script');
+      evidenceScript.src = '/evidence-v1.js?v=app-radar-v2';
+      evidenceScript.onload = loadRadar;
+      evidenceScript.onerror = () => { root.textContent = 'App Radar šiuo metu nepasiekiamas.'; };
+      document.head.append(evidenceScript);
+    }
   }
   if (!window.PioneerRadar) return;
 
