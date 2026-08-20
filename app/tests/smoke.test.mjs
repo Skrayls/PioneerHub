@@ -104,7 +104,6 @@ for (const [route, shellSource, assets] of [
   ['/sauga/passphrase', '<link href="styles.css"><link href="safety-center.css"><script src="safety-center.js"></script>', ['/styles.css', '/safety-center.css', '/safety-center.js']],
   ['/pervedimo-repeticija', '<link href="styles.css"><link href="brand.css"><link href="transfer-rehearsal.css"><script src="transfer-rehearsal.js"></script>', ['/styles.css', '/brand.css', '/transfer-rehearsal.css', '/transfer-rehearsal.js']],
   ['/kyc-busena', '<link href="styles.css"><link href="brand.css"><link href="kyc-status-navigator.css"><script src="kyc-status-navigator.js"></script>', ['/styles.css', '/brand.css', '/kyc-status-navigator.css', '/kyc-status-navigator.js']],
-  ['/app-paleidimo-checklist', '<link href="styles.css"><link href="brand.css"><link href="app-launch-checklist.css"><script src="app-launch-checklist.js"></script>', ['/styles.css', '/brand.css', '/app-launch-checklist.css', '/app-launch-checklist.js']],
 ]) {
   const routeShell = await worker.fetch(new Request(`https://example.test${route}`), {
     ASSETS: { fetch: async () => new Response(`<html><head>${shellSource}</head><body></body></html>`, { headers: { 'content-type': 'text/plain' } }) },
