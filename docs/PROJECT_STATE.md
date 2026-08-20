@@ -1,9 +1,10 @@
 # PioneerHub project state
 
-- Production main: `b5e6ac0f67376613f0ee5021f5d4468a7f196c02` (Pi App Inspector V1).
-- Production release: `2026-08-19-app-inspector-v1`; frontend build: `app-inspector-v1`.
-- Active milestone: Pi Transfer Rehearsal V1 (browser-only, anonymous; no backend, auth, payments or Mainnet). Implementation is complete on `feature/pi-transfer-rehearsal-v1`; PR pending review, exact-head CI, merge and production deployment.
-- Completed: Safety Center V1, App Radar V2, Learn V2, Start + Return V1, Visual Polish V1, Community Signals V1, Pi App Inspector V1.
+- Production main: `45731d4aa785fc17087d483c37adca7a44d45038` (Pi Transfer Rehearsal V1).
+- Production release: Pi Transfer Rehearsal V1, verified 2026-08-20; existing frontend cache marker remains `app-inspector-v1`.
+- Active milestone: none. Pi Transfer Rehearsal V1 is complete: anonymous browser-only decision rehearsal; no backend, auth, payments, wallet interaction or Mainnet capability. PR #51 merged with exact-head CI and Workers Builds green; merged-main production smoke and route verification passed.
+- Completed: Safety Center V1, App Radar V2, Learn V2, Start + Return V1, Visual Polish V1, Community Signals V1, Pi App Inspector V1, Pi Transfer Rehearsal V1.
+- Next: post-release whitepaper reassessment and Human Preflight to select the next major utility milestone.
 - Parked: MUA Measurement V1; Cloudflare Workers Builds visibility/capability blocker, GitHub issue #48.
 - Pi auth: diagnostic/Testnet technical debt; not required by core product and not under active work.
 - Payments: locked. `createPayment` absent from product client. Mainnet: absent.
