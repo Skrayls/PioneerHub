@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import worker from '../../src/worker.js';
 
 const root = new URL('../', import.meta.url);
-const [radar, evidence, shell, workerSource, home] = await Promise.all([
+const [radar, evidence, shell, workerSource, home, app] = await Promise.all([
   readFile(new URL('radar-v2.js', root), 'utf8'),
   readFile(new URL('evidence-v1.js', root), 'utf8'),
   readFile(new URL('radar-shell.txt', root), 'utf8'),
   readFile(new URL('../../src/worker.js', import.meta.url), 'utf8'),
   readFile(new URL('index.html', root), 'utf8'),
+  readFile(new URL('app.js', root), 'utf8'),
 ]);
 
 const routes = ['/radar/metodika', '/radar/pi-browser', '/radar/pi-wallet', '/radar/fireside-forum', '/radar/pi-chats', '/radar/kyc', '/radar/pi-launchpad', '/radar/cidi-games'];
@@ -29,6 +30,8 @@ assert.match(shell, /evidence-v1\.js/);
 assert.match(shell, /Nepriklausomas informacinis įrankis/);
 assert.match(home, /Sužinok, ką PioneerHub realiai peržiūrėjo/);
 assert.match(home, /href="\/radar\/metodika"/);
+assert.match(app, /evidenceScript\.src = '\/evidence-v1\.js\?v=app-radar-v2'/);
+assert.match(app, /evidenceScript\.onload = loadRadar/);
 assert.doesNotMatch(`${radar}\n${shell}`, /Pi\.authenticate|Pi\.signIn|createPayment|fetch\(|passphrase.*(?:input|form)|seed phrase/i);
 
 for (const route of routes) {
