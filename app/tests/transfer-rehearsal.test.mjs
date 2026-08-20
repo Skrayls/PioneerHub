@@ -32,6 +32,6 @@ const response = await worker.fetch(new Request('https://example.test/pervedimo-
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/transfer-rehearsal-shell.txt');
-assert.match(html, /transfer-rehearsal\.css\?v=app-inspector-v1/);
-assert.match(html, /transfer-rehearsal\.js\?v=app-inspector-v1/);
+assert.match(html, /transfer-rehearsal\.css\?v=p0-ui-recovery-v1/);
+assert.match(html, /transfer-rehearsal\.js\?v=p0-ui-recovery-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);
