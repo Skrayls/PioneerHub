@@ -14,14 +14,15 @@ const [radar, evidence, shell, workerSource, home, app] = await Promise.all([
 
 const routes = ['/radar/metodika', '/radar/pi-browser', '/radar/pi-wallet', '/radar/fireside-forum', '/radar/pi-chats', '/radar/kyc', '/radar/pi-launchpad', '/radar/cidi-games'];
 for (const route of routes) assert.match(workerSource, new RegExp(route.replaceAll('/', '\\/')));
-for (const name of ['Pi Browser', 'Pi Wallet', 'Fireside Forum', 'Pi Chats', 'KYC', 'Pi Launchpad', 'CiDi Games']) assert.match(radar, new RegExp(name));
+for (const name of ['Pi Browser', 'Pi Wallet', 'Fireside Forum', 'Pi Chats', 'KYC', 'Pi Launchpad', 'CiDi Games']) assert.match(evidence, new RegExp(name));
 for (const label of ['PATVIRTINTI PAGRINDAI', 'ATSARGIAI', 'RIBOTI DUOMENYS', 'VENGTI / DIDELĖ RIZIKA']) assert.match(evidence, new RegExp(label));
 for (const label of ['Šviežia peržiūra', 'Peržiūra netrukus', 'Peržiūra vėluoja']) assert.match(evidence, new RegExp(label));
 assert.match(evidence, /const FRESH_DAYS = 14/);
 assert.match(evidence, /const DUE_DAYS = 30/);
 assert.match(radar, /Ką PioneerHub patikrino/);
 assert.match(radar, /Ko negalėjome patikrinti/);
-assert.match(radar, /PioneerHub netestavo/);
+assert.match(evidence, /PioneerHub netestavo/);
+assert.doesNotMatch(radar, /const localRecords/);
 assert.match(radar, /radarSearch/);
 assert.match(radar, /radarStatus/);
 assert.match(radar, /radarFreshness/);

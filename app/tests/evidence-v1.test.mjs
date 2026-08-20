@@ -14,6 +14,8 @@ assert.equal(evidence.findByHostname('WALLET.PINET.COM').slug, 'pi-wallet');
 assert.equal(evidence.findByHostname('unknown.example'), undefined);
 assert.equal(evidence.records.find(record => record.slug === 'pi-wallet').evidenceState, 'VERIFIED_BASICS');
 assert.match(evidence.records.find(record => record.slug === 'pi-wallet').limitations, /netestavo/);
+assert.match(evidence.records.find(record => record.slug === 'pi-wallet').found, /wallet\.pinet\.com/);
+assert.match(evidence.records.find(record => record.slug === 'pi-wallet').next, /30 sekundžių/);
 assert.equal(evidence.freshnessFor('2026-08-19', new Date('2026-08-20T12:00:00Z')).key, 'fresh');
 assert.equal(evidence.freshnessFor('2026-07-20', new Date('2026-08-20T12:00:00Z')).key, 'overdue');
 assert.match(inspectorShell, /evidence-v1\.js[\s\S]*app-inspector\.js/);
@@ -22,5 +24,5 @@ assert.match(workerSource, /replaceAll\('src="evidence-v1\.js"', `src="\/evidenc
 assert.match(inspector, /findByHostname/);
 assert.match(inspector, /Normalizuotas domenas/);
 assert.match(radar, /PioneerEvidence must load before App Radar/);
-assert.match(radar, /shared\.evidenceState/);
+assert.match(radar, /evidence\.records\.map/);
 assert.doesNotMatch(source, /fetch\(|localStorage|sessionStorage|Pi\.authenticate|createPayment/i);
