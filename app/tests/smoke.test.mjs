@@ -31,7 +31,7 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const FRONTEND_BUILD = 'app-inspector-v1'/);
+assert.match(js, /const FRONTEND_BUILD = 'p0-ui-recovery-v1'/);
 assert.match(js, /PI_SIGNIN_CLIENT_ID/);
 assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
 assert.match(js, /response_type: 'token'/);
@@ -90,12 +90,12 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=app-inspector-v1'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=p0-ui-recovery-v1'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /href="\/styles\.css\?v=app-inspector-v1"/);
-assert.match(shellHtml, /src="\/app\.js\?v=app-inspector-v1"/);
+assert.match(shellHtml, /href="\/styles\.css\?v=p0-ui-recovery-v1"/);
+assert.match(shellHtml, /src="\/app\.js\?v=p0-ui-recovery-v1"/);
 assert.doesNotMatch(shellHtml, /Build:/);
 assert.doesNotMatch(shellHtml, /FRONTEND-RUNTIME: PENDING|AUTH TESTING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
@@ -109,7 +109,7 @@ for (const [route, shellSource, assets] of [
     ASSETS: { fetch: async () => new Response(`<html><head>${shellSource}</head><body></body></html>`, { headers: { 'content-type': 'text/plain' } }) },
   });
   const routeHtml = await routeShell.text();
-  for (const asset of assets) assert.match(routeHtml, new RegExp(`(?:href|src)="${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=app-inspector-v1"`), `${route} must emit root-relative ${asset}`);
+  for (const asset of assets) assert.match(routeHtml, new RegExp(`(?:href|src)="${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=p0-ui-recovery-v1"`), `${route} must emit root-relative ${asset}`);
   assert.doesNotMatch(routeHtml, /(?:href|src)="(?!\/|https?:)[^"]+\.(?:css|js)\?v=/, `${route} must not emit relative required assets`);
 }
 
@@ -191,7 +191,7 @@ assert.match(diagnosticHtml, /accessTokenExists: Boolean\(result\?\.accessToken\
 assert.match(diagnosticHtml, /Testnet-only diagnostic\. Payments are locked\./);
 assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList|fetch\(|localStorage|sessionStorage/i);
 assert.doesNotMatch(diagnosticHtml, /render\([^\n]*accessToken[^\n]*\)/);
-assert.match(workerSource, /const FRONTEND_BUILD = "app-inspector-v1";/, 'App Inspector build marker must be current');
+assert.match(workerSource, /const FRONTEND_BUILD = "p0-ui-recovery-v1";/, 'App Inspector build marker must be current');
 assert.match(workerSource, /PI_AUTH_DIAGNOSTIC_PATH = "\/diag\/pi-auth"/);
 
 const nativeFetchForAuth = globalThis.fetch;

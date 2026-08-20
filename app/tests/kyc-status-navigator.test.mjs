@@ -29,6 +29,6 @@ const response = await worker.fetch(new Request('https://example.test/kyc-busena
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/kyc-status-navigator-shell.txt');
-assert.match(html, /kyc-status-navigator\.css\?v=app-inspector-v1/);
-assert.match(html, /kyc-status-navigator\.js\?v=app-inspector-v1/);
+assert.match(html, /kyc-status-navigator\.css\?v=p0-ui-recovery-v1/);
+assert.match(html, /kyc-status-navigator\.js\?v=p0-ui-recovery-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);

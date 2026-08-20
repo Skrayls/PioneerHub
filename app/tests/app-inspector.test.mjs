@@ -27,8 +27,8 @@ assert.doesNotMatch(script, /fetch\(|sendBeacon|localStorage|sessionStorage|Pi\.
 assert.match(css, /min-height:48px/);
 assert.match(workerSource, /APP_INSPECTOR_ROUTE = "\/tikrinti-nuoroda"/);
 assert.match(workerSource, /app-inspector-shell\.txt/);
-assert.match(workerSource, /const FRONTEND_BUILD = "app-inspector-v1"/);
-assert.match(config, /"RELEASE_ID": "2026-08-19-app-inspector-v1"/);
+assert.match(workerSource, /const FRONTEND_BUILD = "p0-ui-recovery-v1"/);
+assert.match(config, /"RELEASE_ID": "2026-08-20-p0-ui-recovery-v1"/);
 
 let assetPath = '';
 const response = await worker.fetch(new Request('https://example.test/tikrinti-nuoroda'), {
@@ -37,6 +37,6 @@ const response = await worker.fetch(new Request('https://example.test/tikrinti-n
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/app-inspector-shell.txt');
-assert.match(html, /app-inspector\.css\?v=app-inspector-v1/);
-assert.match(html, /app-inspector\.js\?v=app-inspector-v1/);
+assert.match(html, /app-inspector\.css\?v=p0-ui-recovery-v1/);
+assert.match(html, /app-inspector\.js\?v=p0-ui-recovery-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);
