@@ -25,3 +25,9 @@ Production evidence for exact merged head `24d8f89`:
 | `/radar/metodika`, `/radar/pi-browser`, `/radar/pi-wallet`, `/radar/fireside-forum`, `/radar/pi-chats`, `/radar/kyc`, `/radar/pi-launchpad`, `/radar/cidi-games` | PASS |
 
 Every audited route returned HTTP 200, rendered its expected non-empty application content, loaded required local CSS/JS with HTTP 200 and correct non-HTML MIME types, produced no critical uncaught browser errors, and had no mobile horizontal overflow. The regression gate remains required in CI.
+
+## Evidence Layer V1 release — 2026-08-20
+
+Status: **PASS — production-cleared.**
+
+Merged main: `bf4d972`. Exact-head CI `32402449670` passed, including hosted `npm run qa:rendered`; Workers Build `e4cfd6eb-757d-4d82-8dc6-1f15321bc82d` passed before merge. Merged-main CI `32402588705` and Workers Build `43c6666e-cd33-4f6f-a7b6-355057ceb325` passed. Live `PIONEERHUB_URL=https://pioneerhub.andriussimonaitis.workers.dev npm run qa:rendered` passed all 32 public routes at 390px, and `npm run smoke:production` passed.
