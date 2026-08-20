@@ -15,6 +15,16 @@
 | Node readiness guide app | Node path is confusing | Technical niche | Medium | Low | Medium | 6 |
 | Pi community event calendar | Community info is fragmented | Ecosystem utility | Medium | Low | Medium | 5 |
 
+## Selected next milestone
+
+**KYC Status Navigator V1** (the KYC issue triage candidate) was selected on 2026-08-20 after Pi Transfer Rehearsal V1. It will provide an anonymous, browser-only, fixed-choice path to official-safe next steps for common KYC-status questions. It will not request or process KYC documents, screenshots, identities, usernames, wallet data, or status evidence, and will not make a KYC outcome claim.
+
+Why now:
+
+- KYC uncertainty is a practical, recurring blocker for the core Lithuanian Pioneer audience.
+- A bounded decision guide adds a distinct repeat-use utility without Pi credentials, a backend, personal-data storage, payments, or Mainnet capability.
+- App Radar notifier remains a later candidate because automated user communications require owner approval.
+
 ## Top 3
 
 1. **PioneerHub Scam Shield**
