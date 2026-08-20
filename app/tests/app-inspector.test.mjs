@@ -18,7 +18,8 @@ assert.match(shell, /passphrase, seed frazės, privataus rakto, KYC dokumentų/)
 assert.match(shell, /app-inspector\.js/);
 assert.match(home, /href="\/tikrinti-nuoroda"/);
 assert.match(script, /new URL\(value\)/);
-assert.match(script, /knownOfficial/);
+assert.match(script, /PioneerEvidence/);
+assert.match(script, /findByHostname/);
 assert.match(script, /wallet\.pinet\.com/);
 assert.match(script, /xn--/);
 assert.match(script, /Sustok ir tikrink kitu keliu/);
