@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
-const [source, inspector, radar, inspectorShell, radarShell] = await Promise.all([
-  readFile(new URL('evidence-v1.js', root), 'utf8'), readFile(new URL('app-inspector.js', root), 'utf8'), readFile(new URL('radar-v2.js', root), 'utf8'), readFile(new URL('app-inspector-shell.txt', root), 'utf8'), readFile(new URL('radar-shell.txt', root), 'utf8'),
+const [source, inspector, radar, inspectorShell, radarShell, workerSource] = await Promise.all([
+  readFile(new URL('evidence-v1.js', root), 'utf8'), readFile(new URL('app-inspector.js', root), 'utf8'), readFile(new URL('radar-v2.js', root), 'utf8'), readFile(new URL('app-inspector-shell.txt', root), 'utf8'), readFile(new URL('radar-shell.txt', root), 'utf8'), readFile(new URL('../../src/worker.js', import.meta.url), 'utf8'),
 ]);
 const context = { window: {}, Date };
 vm.runInNewContext(source, context);
@@ -18,6 +18,7 @@ assert.equal(evidence.freshnessFor('2026-08-19', new Date('2026-08-20T12:00:00Z'
 assert.equal(evidence.freshnessFor('2026-07-20', new Date('2026-08-20T12:00:00Z')).key, 'overdue');
 assert.match(inspectorShell, /evidence-v1\.js[\s\S]*app-inspector\.js/);
 assert.match(radarShell, /evidence-v1\.js[\s\S]*radar-v2\.js/);
+assert.match(workerSource, /replaceAll\('src="evidence-v1\.js"', `src="\/evidence-v1\.js\$\{version\}"`\)/);
 assert.match(inspector, /findByHostname/);
 assert.match(inspector, /Normalizuotas domenas/);
 assert.match(radar, /PioneerEvidence must load before App Radar/);

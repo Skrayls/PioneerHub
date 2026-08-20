@@ -446,6 +446,7 @@ export default { async fetch(request, env) {
       .replaceAll('src="safety-center.js"', `src="/safety-center.js${version}"`)
       .replaceAll('href="shield.css"', `href="/shield.css${version}"`)
       .replaceAll('href="brand.css"', `href="/brand.css${version}"`)
+      .replaceAll('src="evidence-v1.js"', `src="/evidence-v1.js${version}"`)
       .replaceAll('src="radar-v2.js"', `src="/radar-v2.js${version}"`)
       .replaceAll('src="learn-v2.js"', `src="/learn-v2.js${version}"`)
       .replaceAll('href="community-signals.css"', `href="/community-signals.css${version}"`)
