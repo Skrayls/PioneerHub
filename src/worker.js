@@ -190,6 +190,7 @@ function piPaymentChecklistShell(nonce) {
   <p>This isolated technical diagnostic is not a PioneerHub product feature or payment service.</p>
   <button id="run-checklist-payment" type="button" disabled>Run Testnet checklist transaction</button>
   <p id="payment-state" role="status" aria-live="polite">Checking the Testnet-only diagnostic environment…</p>
+  <ol id="payment-diagnostic-log" aria-live="polite"></ol>
 </main>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
 (() => {
@@ -198,12 +199,33 @@ function piPaymentChecklistShell(nonce) {
   const metadata = ${JSON.stringify(PI_PAYMENT_CHECKLIST_METADATA)};
   const button = document.querySelector('#run-checklist-payment');
   const state = document.querySelector('#payment-state');
+  const log = document.querySelector('#payment-diagnostic-log');
   let authorization = '';
   let busy = false;
   let incompletePayment = null;
+  let piInitPromise = null;
 
   const setState = message => { state.textContent = message; };
-  const boundedError = error => String(error?.message || error || 'unknown_error').replace(/[A-Za-z0-9_-]{24,}/g, '[redacted]').slice(0, 160);
+  const redact = value => String(value || '').replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240);
+  const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
+  const errorDetails = error => JSON.stringify({ name: redact(error?.name), message: redact(error?.message || error), constructor: redact(error?.constructor?.name), type: typeof error });
+  const authCode = error => {
+    const message = String(error?.message || error || '').toLowerCase();
+    if (/scope|permission/.test(message)) return 'AUTH_PI_SCOPE_FAILED';
+    if (/denied|cancelled|canceled|declined/.test(message)) return 'AUTH_PI_REJECTED';
+    if (/not.initiali[sz]ed|call init|initiali[sz]ation/.test(message)) return 'AUTH_PI_INIT_FAILED';
+    return 'AUTH_PI_REJECTED';
+  };
+  const initPi = () => {
+    if (!piInitPromise) piInitPromise = (async () => {
+      render('PI_INIT_ENTERED');
+      if (typeof Pi === 'undefined') throw new Error('pi_sdk_missing');
+      await Pi.init({ version: "2.0" });
+      render('PI_INIT_RESOLVED');
+      return Pi;
+    })().catch(error => { piInitPromise = null; render('PI_INIT_REJECTED', errorDetails(error)); throw error; });
+    return piInitPromise;
+  };
   const paymentIdOf = payment => typeof payment?.identifier === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(payment.identifier) ? payment.identifier : '';
   const txidOf = payment => {
     const txid = payment?.transaction?.txid;
@@ -220,11 +242,30 @@ function piPaymentChecklistShell(nonce) {
     return result;
   }
   async function authenticate() {
-    const result = await Pi.authenticate(['payments'], onIncompletePaymentFound);
-    const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result?.accessToken }) });
-    if (!response.ok) throw new Error('server_auth_failed');
-    const session = await response.json();
-    if (!session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_rejected');
+    const pi = await initPi();
+    const scopes = ['payments'];
+    render('AUTH_SCOPES', JSON.stringify(scopes));
+    render('PI_AUTHENTICATE_ENTERED');
+    let promise;
+    try { promise = pi.authenticate(['payments'], onIncompletePaymentFound); render('PI_AUTHENTICATE_PROMISE_CREATED'); }
+    catch (error) { render('PI_AUTHENTICATE_REJECTED', errorDetails(error)); throw Object.assign(new Error(authCode(error)), { cause: error }); }
+    let result;
+    try { result = await promise; }
+    catch (error) { render('PI_AUTHENTICATE_REJECTED', errorDetails(error)); throw Object.assign(new Error(authCode(error)), { cause: error }); }
+    render('PI_AUTHENTICATE_RESOLVED', JSON.stringify({ accessTokenExists: Boolean(result?.accessToken), userExists: Boolean(result?.user), uidExists: Boolean(result?.user?.uid) }));
+    if (typeof result?.accessToken !== 'string' || !result.accessToken) throw new Error('AUTH_ACCESS_TOKEN_MISSING');
+    render('AUTH_SERVER_VERIFY_ENTERED');
+    let response;
+    try { response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result.accessToken }) }); }
+    catch { throw new Error('AUTH_SERVER_VERIFY_FAILED'); }
+    const session = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const code = session?.code;
+      render('AUTH_SERVER_REJECTED', JSON.stringify({ status: response.status, code }));
+      throw new Error(code === 'AUTH-ME-VERIFY' || code === 'AUTH-NETWORK' ? 'AUTH_SERVER_VERIFY_FAILED' : 'AUTH_SERVER_SESSION_FAILED');
+    }
+    if (!session?.authenticated || typeof session.authorization !== 'string') throw new Error('AUTH_SERVER_SESSION_FAILED');
+    render('AUTH_SERVER_SESSION_CREATED');
     authorization = session.authorization;
   }
   async function recoverIncomplete(payment) {
@@ -240,6 +281,7 @@ function piPaymentChecklistShell(nonce) {
     } catch { setState('An incomplete Testnet payment was found, but server completion is not yet confirmed. No new payment will be created.'); }
   }
   function onIncompletePaymentFound(payment) {
+    render('INCOMPLETE_PAYMENT_CALLBACK', JSON.stringify({ paymentPresent: Boolean(payment), transactionPresent: Boolean(payment?.transaction) }));
     incompletePayment = payment || {};
     button.disabled = true;
     if (authorization) void recoverIncomplete(incompletePayment);
@@ -249,6 +291,7 @@ function piPaymentChecklistShell(nonce) {
     if (busy || incompletePayment) return;
     busy = true; button.disabled = true;
     try {
+      render('RUNTIME_CONTEXT', JSON.stringify({ origin: location.origin, href: location.href, referrer: document.referrer, userAgent: navigator.userAgent, isTopLevel: window.top === window.self, sdkPresent: typeof Pi !== 'undefined' }));
       setState('Authenticating for the Testnet payment scope…');
       await authenticate();
       if (incompletePayment) { await recoverIncomplete(incompletePayment); return; }
@@ -264,18 +307,21 @@ function piPaymentChecklistShell(nonce) {
           setState('SUCCESS: PioneerHub server completed the Testnet transaction. Revisit Developer Portal to confirm the checklist item.');
         },
         onCancel: () => { setState('Testnet payment cancelled. No transaction was completed.'); },
-        onError: error => { setState('Testnet payment error: ' + boundedError(error)); },
+        onError: error => { setState('Testnet payment error: ' + redact(error?.message || error)); },
       };
       setState('Opening the Testnet payment screen…');
       await Pi.createPayment({ amount, memo, metadata }, callbacks);
-    } catch (error) { setState('Testnet checklist transaction did not start: ' + boundedError(error)); }
+    } catch (error) {
+      const code = /^AUTH_(?:PI_INIT_FAILED|PI_REJECTED|PI_SCOPE_FAILED|ACCESS_TOKEN_MISSING|SERVER_VERIFY_FAILED|SERVER_SESSION_FAILED)$/.test(error?.message) ? error.message : 'AUTH_PI_REJECTED';
+      render('AUTH_FAILURE_CODE', code);
+      setState('Testnet checklist transaction did not start. Diagnostic code: ' + code + '.');
+    }
     finally { busy = false; if (!incompletePayment) button.disabled = false; }
   }
-  (async () => {
-    if (typeof Pi === 'undefined') { setState('Pi SDK is unavailable. Open this URL inside Pi Browser.'); return; }
-    try { await Pi.init({ version: "2.0" }); button.disabled = false; setState('Ready. This will create one 0.01 Test-Pi Developer Portal verification transaction only after you press the button.'); }
-    catch { setState('Pi SDK initialization failed. Open this URL inside Pi Browser.'); }
-  })();
+  render('PAGE_READY');
+  render('SDK_PRESENT', String(typeof Pi !== 'undefined'));
+  if (typeof Pi === 'undefined') setState('Pi SDK is unavailable. Open this URL inside Pi Browser.');
+  else { button.disabled = false; setState('Ready. Pi SDK initialization and authentication begin only after you press the button.'); }
   button.addEventListener('click', run);
 })();
 </script></body></html>`;
@@ -511,10 +557,13 @@ export default { async fetch(request, env) {
     if (!data || typeof data.accessToken !== "string" || data.accessToken.length < 12 || data.accessToken.length > 4096) return json({ code: "AUTH-NETWORK" }, 400);
     const identity = await piUser(data.accessToken);
     if (!identity.uid) return json({ code: identity.code }, 401);
-    const token = await authorization(env.PI_SESSION_SECRET);
-    const stub = env.AUTH_SESSIONS.get(env.AUTH_SESSIONS.idFromName(await sessionKey(token, env.PI_SESSION_SECRET)));
-    await stub.fetch("https://session.internal/", { method: "POST", body: JSON.stringify({ uid: identity.uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }) });
-    return json({ authenticated: true, authorization: token, expiresIn: SESSION_TTL_SECONDS });
+    try {
+      const token = await authorization(env.PI_SESSION_SECRET);
+      const stub = env.AUTH_SESSIONS.get(env.AUTH_SESSIONS.idFromName(await sessionKey(token, env.PI_SESSION_SECRET)));
+      const stored = await stub.fetch("https://session.internal/", { method: "POST", body: JSON.stringify({ uid: identity.uid, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }) });
+      if (!stored.ok) return json({ code: "AUTH-SESSION" }, 503);
+      return json({ authenticated: true, authorization: token, expiresIn: SESSION_TTL_SECONDS });
+    } catch { return json({ code: "AUTH-SESSION" }, 503); }
   }
   if (url.pathname === "/api/pi/logout" && request.method === "POST") return json({ loggedOut: true });
   const paymentRoute = url.pathname.match(/^\/api\/pi\/payments\/([A-Za-z0-9_-]{1,160})\/(approve|complete)$/);

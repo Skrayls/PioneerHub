@@ -211,7 +211,21 @@ assert.match(paymentChecklistHtml, /Run Testnet checklist transaction/);
 assert.match(paymentChecklistHtml, /const amount = 0\.01;/);
 assert.match(paymentChecklistHtml, /PioneerHub Testnet Developer Portal verification/);
 assert.match(paymentChecklistHtml, /purpose":"developer_portal_checklist/);
-assert.match(paymentChecklistHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(paymentChecklistHtml, /pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(paymentChecklistHtml, /PI_INIT_ENTERED/);
+assert.match(paymentChecklistHtml, /PI_INIT_RESOLVED/);
+assert.match(paymentChecklistHtml, /PI_INIT_REJECTED/);
+assert.match(paymentChecklistHtml, /PI_AUTHENTICATE_ENTERED/);
+assert.match(paymentChecklistHtml, /PI_AUTHENTICATE_PROMISE_CREATED/);
+assert.match(paymentChecklistHtml, /PI_AUTHENTICATE_RESOLVED/);
+assert.match(paymentChecklistHtml, /PI_AUTHENTICATE_REJECTED/);
+assert.match(paymentChecklistHtml, /AUTH_PI_INIT_FAILED|AUTH_PI_REJECTED|AUTH_PI_SCOPE_FAILED/);
+assert.match(paymentChecklistHtml, /AUTH_ACCESS_TOKEN_MISSING/);
+assert.match(paymentChecklistHtml, /AUTH_SERVER_VERIFY_FAILED/);
+assert.match(paymentChecklistHtml, /AUTH_SERVER_SESSION_FAILED/);
+assert.match(paymentChecklistHtml, /RUNTIME_CONTEXT/);
+assert.match(paymentChecklistHtml, /accessTokenExists/);
+assert.match(paymentChecklistHtml, /uidExists/);
 assert.match(paymentChecklistHtml, /await serverPayment\(paymentId, 'approve'\);/);
 assert.match(paymentChecklistHtml, /await serverPayment\(paymentId, 'complete', txid\);/);
 assert.ok(paymentChecklistHtml.indexOf('onReadyForServerApproval:') < paymentChecklistHtml.indexOf('onReadyForServerCompletion:'), 'approval callback must be defined before completion callback');
@@ -220,6 +234,7 @@ assert.match(paymentChecklistHtml, /No new payment will be created/);
 assert.match(paymentChecklistHtml, /if \(incompletePayment\) \{ await recoverIncomplete\(incompletePayment\); return; \}/);
 assert.match(paymentChecklistHtml, /Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/);
 assert.match(paymentChecklistHtml, /async function run\(\) \{[\s\S]*?Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/, 'createPayment must remain inside the click target');
+assert.ok(paymentChecklistHtml.indexOf('await authenticate();') < paymentChecklistHtml.indexOf('Pi.createPayment'), 'createPayment must follow successful authentication');
 assert.match(paymentChecklistHtml, /button\.addEventListener\('click', run\)/, 'the payment flow must require an explicit click');
 assert.match(paymentChecklistHtml, /SUCCESS: PioneerHub server completed the Testnet transaction/);
 assert.doesNotMatch(paymentChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
@@ -288,6 +303,33 @@ assert.deepEqual(await piStatus.json(), { network: 'testnet', auth: 'ready', pay
 const malformedAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', AUTH_SESSIONS: {} });
 assert.equal(malformedAuth.status, 400);
 assert.doesNotMatch(await malformedAuth.text(), /secret|token/i);
+
+const mainnetAuth = await worker.fetch(new Request('https://example.test/api/pi/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: 'valid-access-token' }),
+}), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'mainnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', AUTH_SESSIONS: {} });
+assert.equal(mainnetAuth.status, 503);
+assert.deepEqual(await mainnetAuth.json(), { code: 'AUTH-SESSION' });
+
+const nativeFetchForAuthFailure = globalThis.fetch;
+globalThis.fetch = async () => new Response('{}', { status: 401 });
+const rejectedVerification = await worker.fetch(new Request('https://example.test/api/pi/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: 'valid-access-token' }),
+}), { ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret', AUTH_SESSIONS: {} });
+globalThis.fetch = nativeFetchForAuthFailure;
+assert.equal(rejectedVerification.status, 401);
+assert.deepEqual(await rejectedVerification.json(), { code: 'AUTH-ME-VERIFY' });
+
+const nativeFetchForSessionFailure = globalThis.fetch;
+globalThis.fetch = async () => Response.json({ uid: 'verified-user' });
+const rejectedSession = await worker.fetch(new Request('https://example.test/api/pi/auth', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: 'valid-access-token' }),
+}), {
+  ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'secret', PI_SESSION_SECRET: 'session-secret',
+  AUTH_SESSIONS: { idFromName: value => value, get: () => ({ fetch: async () => new Response(null, { status: 503 }) }) },
+});
+globalThis.fetch = nativeFetchForSessionFailure;
+assert.equal(rejectedSession.status, 503);
+assert.deepEqual(await rejectedSession.json(), { code: 'AUTH-SESSION' });
 
 const records = new Map();
 const state = {
