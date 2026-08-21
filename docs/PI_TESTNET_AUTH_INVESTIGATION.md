@@ -40,6 +40,31 @@ PR #28 moved `Pi.init` to the explicit user auth action after earlier initializa
 
 The recovery makes **one** combined-scope attempt per explicit owner click. It does not loop, fall back repeatedly, clear consent, modify Portal settings, or manipulate user consent remotely.
 
+## Pi Testnet auth platform / consent audit (2026-08-21)
+
+### Confirmed
+
+- The deployed Worker is production/Testnet-only: `PI_NETWORK` is `testnet`; the deployed Worker secret inventory contains only the Testnet API key, session secret, and domain-validation content; Mainnet configuration is absent. The server API key is not involved until after SDK authentication succeeds.
+- The expected self-hosted Production URL is `https://pioneerhub.andriussimonaitis.workers.dev`. It serves HTTPS without a redirect. The live `/validation-key.txt` response is plain text, `200`, `no-store`, `nosniff`, and byte-for-byte matches the locally retained Portal validation content. This establishes a structurally correct validation endpoint, but only the Developer Portal can attest its saved verification state.
+- `Pi.init({ version: "2.0" })`, the CDN script location, one explicit-click `Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)`, and the server-verification sequence match the current official SDK reference and the Pi demo flow. The isolated route contains one authenticate call, no page-load authentication, no automatic retry, no `sandbox: true`, and does not load `app/app.js`; repeated owner log sequences are therefore separate clicks, not an internal retry.
+- Sandbox mode is for a Development URL opened through `sandbox.minepi.com`; current official guidance does not support enabling it for this production Testnet origin. It remains disabled.
+- The current public SDK source maps the exact earlier message `Network error: Failed to check previous consent scopes` to its internal `consent_check_failed` result. This confirms the earlier failure occurred inside the SDK's consent lookup, not in PioneerHub's backend.
+- The same current SDK source emits generic `Authentication failed.` only after the consent step, while it obtains bridge communication data and internally calls its own `/v2/me`. The observed post-Allow failure therefore remains inside the Pi SDK/Pi platform path before PioneerHub receives an access token. It is not evidence of a `PI_TESTNET_API_KEY`, Testnet-wallet, payment approval, completion, or Worker session failure.
+
+### Likely / possible / unsupported
+
+- **Likely next configuration check:** the Testnet app's optional **Whitelist Users** setting. Official Developer Portal guidance says a blank field grants access to all Testnet visitors; a non-empty field limits access to listed Pi usernames. This setting cannot be read by the Worker or inferred from the consent modal.
+- **Possible:** a stale consent record, a Pi Browser consent-service/network issue, or a Pi platform regression can produce the internal SDK failure. The public SDK exposes no supported app API to reset, revoke, or inspect that state.
+- **Unsupported:** changing scope order, enabling `sandbox: true`, rotating the server API key, creating a wallet, or changing payment callbacks as a remedy for this pre-token authentication failure. No source supports those as fixes here.
+
+### Single owner configuration action
+
+In Pi Browser, open `develop.pi` → **PioneerHub Testnet Lab** → **App Details** → **App Configuration** → **Whitelist Users**. Leave the field **blank** to allow Testnet access, or ensure it contains the exact Pi username that will authenticate; save the configuration. Then make one retry at `/diag/pi-payment-checklist`. Do not change the network, Production URL, Development URL, sandbox setting, API key, or wallet settings.
+
+### Ready-to-send Pi developer support report
+
+> Testnet app: PioneerHub Testnet Lab. Production origin: `https://pioneerhub.andriussimonaitis.workers.dev`. In Pi Browser on iOS, `Pi.init({ version: "2.0" })` succeeds. An explicit `Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)` opens the native PioneerHub Testnet Lab consent modal; after Allow, the SDK rejects with `Authentication failed.` (`AUTH_PI_PRIMARY_FAILED`). A prior attempt produced `Network error: Failed to check previous consent scopes` (`AUTH_PI_CONSENT_SCOPE_FAILED`). No access token is returned, PioneerHub's `/api/pi/auth` is not reached, and no payment is created. Please advise whether the app's Testnet consent/access state requires a Portal-side correction or whether there is a Pi Browser/consent-service incident. No credentials, tokens, wallet addresses, or payment data are included.
+
 ## Failure taxonomy
 
 - `AUTH_PI_INIT_FAILED`: SDK missing or `Pi.init` rejected.
