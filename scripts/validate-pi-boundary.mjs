@@ -28,7 +28,9 @@ assert.match(worker, /PI_PAYMENT_CHECKLIST_PATH = "\/diag\/pi-payment-checklist"
 assert.match(worker, /PI_PAYMENT_CHECKLIST_AMOUNT = 0\.01/);
 assert.match(worker, /PI_PAYMENT_CHECKLIST_METADATA = Object\.freeze\(\{ purpose: "developer_portal_checklist" \}\)/);
 assert.match(worker, /env\.PI_NETWORK !== "testnet" \|\| !env\.PI_TESTNET_API_KEY \|\| !env\.PI_SESSION_SECRET \|\| !env\.PAYMENT_LEDGER \|\| !env\.AUTH_SESSIONS/);
-assert.match(worker, /pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(worker, /primaryScopes = \['username', 'payments'\]/);
+assert.match(worker, /pi\.authenticate\(\['username', 'payments'\], onIncompletePaymentFound\)/);
+assert.equal((worker.match(/\.authenticate\(/g) || []).length, 2, 'only the isolated auth diagnostic and one checklist attempt may authenticate');
 assert.match(worker, /Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/);
 assert.equal((worker.match(/Pi\.createPayment\(/g) || []).length, 1, 'createPayment must exist only in the isolated checklist harness');
 assert.doesNotMatch(html, /createPayment|Run Testnet checklist transaction|payment-checklist/i);

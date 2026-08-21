@@ -204,6 +204,8 @@ function piPaymentChecklistShell(nonce) {
   let busy = false;
   let incompletePayment = null;
   let piInitPromise = null;
+  const primaryScopes = ['username', 'payments'];
+  const scopeStrategy = 'PRIMARY_USERNAME_PAYMENTS';
 
   const setState = message => { state.textContent = message; };
   const redact = value => String(value || '').replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240);
@@ -211,10 +213,11 @@ function piPaymentChecklistShell(nonce) {
   const errorDetails = error => JSON.stringify({ name: redact(error?.name), message: redact(error?.message || error), constructor: redact(error?.constructor?.name), type: typeof error });
   const authCode = error => {
     const message = String(error?.message || error || '').toLowerCase();
-    if (/scope|permission/.test(message)) return 'AUTH_PI_SCOPE_FAILED';
-    if (/denied|cancelled|canceled|declined/.test(message)) return 'AUTH_PI_REJECTED';
+    if (/failed to check previous consent scopes/.test(message)) return 'AUTH_PI_CONSENT_SCOPE_FAILED';
+    if (/scope|permission/.test(message)) return 'AUTH_PI_PRIMARY_FAILED';
+    if (/denied|cancelled|canceled|declined/.test(message)) return 'AUTH_PI_PRIMARY_FAILED';
     if (/not.initiali[sz]ed|call init|initiali[sz]ation/.test(message)) return 'AUTH_PI_INIT_FAILED';
-    return 'AUTH_PI_REJECTED';
+    return 'AUTH_PI_PRIMARY_FAILED';
   };
   const initPi = () => {
     if (!piInitPromise) piInitPromise = (async () => {
@@ -243,11 +246,11 @@ function piPaymentChecklistShell(nonce) {
   }
   async function authenticate() {
     const pi = await initPi();
-    const scopes = ['payments'];
-    render('AUTH_SCOPES', JSON.stringify(scopes));
+    render('AUTH_SCOPE_STRATEGY', scopeStrategy);
+    render('AUTH_SCOPES', JSON.stringify(primaryScopes));
     render('PI_AUTHENTICATE_ENTERED');
     let promise;
-    try { promise = pi.authenticate(['payments'], onIncompletePaymentFound); render('PI_AUTHENTICATE_PROMISE_CREATED'); }
+    try { promise = pi.authenticate(['username', 'payments'], onIncompletePaymentFound); render('PI_AUTHENTICATE_PROMISE_CREATED'); }
     catch (error) { render('PI_AUTHENTICATE_REJECTED', errorDetails(error)); throw Object.assign(new Error(authCode(error)), { cause: error }); }
     let result;
     try { result = await promise; }
@@ -312,9 +315,9 @@ function piPaymentChecklistShell(nonce) {
       setState('Opening the Testnet payment screen…');
       await Pi.createPayment({ amount, memo, metadata }, callbacks);
     } catch (error) {
-      const code = /^AUTH_(?:PI_INIT_FAILED|PI_REJECTED|PI_SCOPE_FAILED|ACCESS_TOKEN_MISSING|SERVER_VERIFY_FAILED|SERVER_SESSION_FAILED)$/.test(error?.message) ? error.message : 'AUTH_PI_REJECTED';
+      const code = /^AUTH_(?:PI_INIT_FAILED|PI_PRIMARY_FAILED|PI_CONSENT_SCOPE_FAILED|ACCESS_TOKEN_MISSING|SERVER_VERIFY_FAILED|SERVER_SESSION_FAILED)$/.test(error?.message) ? error.message : 'AUTH_PI_PRIMARY_FAILED';
       render('AUTH_FAILURE_CODE', code);
-      setState('Testnet checklist transaction did not start. Diagnostic code: ' + code + '.');
+      setState('Testnet checklist transaction did not start. Diagnostic code: ' + code + '. Scope strategy: ' + scopeStrategy + '. Pi message: ' + redact(error?.cause?.message || error?.message || error) + '.');
     }
     finally { busy = false; if (!incompletePayment) button.disabled = false; }
   }
