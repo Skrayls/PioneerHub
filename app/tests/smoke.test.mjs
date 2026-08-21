@@ -31,7 +31,7 @@ assert.match(js, /OFFICIAL \/ ECOSYSTEM RESOURCE/);
 assert.match(js, /NOT YET TESTED/);
 assert.doesNotMatch(html, /seed phrase|private key|connect wallet/i);
 assert.doesNotMatch(html, /textarea|type="text"/i);
-assert.match(js, /const FRONTEND_BUILD = 'p0-ui-recovery-v1'/);
+assert.match(js, /const FRONTEND_BUILD = 'testnet-payment-checklist-v1'/);
 assert.match(js, /PI_SIGNIN_CLIENT_ID/);
 assert.match(js, /https:\/\/pioneerhub\.andriussimonaitis\.workers\.dev\/signin\/callback/);
 assert.match(js, /response_type: 'token'/);
@@ -90,12 +90,12 @@ assert.equal(response.headers.get('x-frame-options'), null);
 assert.match(response.headers.get('content-security-policy'), /sdk\.minepi\.com/);
 assert.equal(response.headers.get('cache-control'), 'no-cache');
 
-const shell = await worker.fetch(new Request('https://example.test/?build=p0-ui-recovery-v1'), {
+const shell = await worker.fetch(new Request('https://example.test/?build=testnet-payment-checklist-v1'), {
   ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><section id="lab">old</section>\n<section id="community"></section><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
 });
 const shellHtml = await shell.text();
-assert.match(shellHtml, /href="\/styles\.css\?v=p0-ui-recovery-v1"/);
-assert.match(shellHtml, /src="\/app\.js\?v=p0-ui-recovery-v1"/);
+assert.match(shellHtml, /href="\/styles\.css\?v=testnet-payment-checklist-v1"/);
+assert.match(shellHtml, /src="\/app\.js\?v=testnet-payment-checklist-v1"/);
 assert.doesNotMatch(shellHtml, /Build:/);
 assert.doesNotMatch(shellHtml, /FRONTEND-RUNTIME: PENDING|AUTH TESTING/);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
@@ -109,7 +109,7 @@ for (const [route, shellSource, assets] of [
     ASSETS: { fetch: async () => new Response(`<html><head>${shellSource}</head><body></body></html>`, { headers: { 'content-type': 'text/plain' } }) },
   });
   const routeHtml = await routeShell.text();
-  for (const asset of assets) assert.match(routeHtml, new RegExp(`(?:href|src)="${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=p0-ui-recovery-v1"`), `${route} must emit root-relative ${asset}`);
+  for (const asset of assets) assert.match(routeHtml, new RegExp(`(?:href|src)="${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=testnet-payment-checklist-v1"`), `${route} must emit root-relative ${asset}`);
   assert.doesNotMatch(routeHtml, /(?:href|src)="(?!\/|https?:)[^"]+\.(?:css|js)\?v=/, `${route} must not emit relative required assets`);
 }
 
@@ -191,8 +191,44 @@ assert.match(diagnosticHtml, /accessTokenExists: Boolean\(result\?\.accessToken\
 assert.match(diagnosticHtml, /Testnet-only diagnostic\. Payments are locked\./);
 assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList|fetch\(|localStorage|sessionStorage/i);
 assert.doesNotMatch(diagnosticHtml, /render\([^\n]*accessToken[^\n]*\)/);
-assert.match(workerSource, /const FRONTEND_BUILD = "p0-ui-recovery-v1";/, 'App Inspector build marker must be current');
+assert.match(workerSource, /const FRONTEND_BUILD = "testnet-payment-checklist-v1";/, 'App Inspector build marker must be current');
 assert.match(workerSource, /PI_AUTH_DIAGNOSTIC_PATH = "\/diag\/pi-auth"/);
+
+let paymentChecklistAssetFetch = false;
+const paymentChecklist = await worker.fetch(new Request('https://example.test/diag/pi-payment-checklist'), {
+  ASSETS: { fetch: async () => { paymentChecklistAssetFetch = true; return new Response('unreachable'); } },
+  PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {},
+});
+const paymentChecklistHtml = await paymentChecklist.text();
+assert.equal(paymentChecklist.status, 200);
+assert.equal(paymentChecklistAssetFetch, false, 'payment checklist must not bootstrap PioneerHub product assets');
+assert.match(paymentChecklist.headers.get('x-robots-tag') || '', /noindex/);
+assert.match(paymentChecklist.headers.get('content-security-policy') || '', /https:\/\/sdk\.minepi\.com 'nonce-/);
+assert.match(paymentChecklistHtml, /TESTNET ONLY/);
+assert.match(paymentChecklistHtml, /TEST-PI HAS NO REAL VALUE/);
+assert.match(paymentChecklistHtml, /DEVELOPER PORTAL CONNECTIVITY TEST/);
+assert.match(paymentChecklistHtml, /Run Testnet checklist transaction/);
+assert.match(paymentChecklistHtml, /const amount = 0\.01;/);
+assert.match(paymentChecklistHtml, /PioneerHub Testnet Developer Portal verification/);
+assert.match(paymentChecklistHtml, /purpose":"developer_portal_checklist/);
+assert.match(paymentChecklistHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(paymentChecklistHtml, /await serverPayment\(paymentId, 'approve'\);/);
+assert.match(paymentChecklistHtml, /await serverPayment\(paymentId, 'complete', txid\);/);
+assert.ok(paymentChecklistHtml.indexOf('onReadyForServerApproval:') < paymentChecklistHtml.indexOf('onReadyForServerCompletion:'), 'approval callback must be defined before completion callback');
+assert.match(paymentChecklistHtml, /onIncompletePaymentFound\(payment\)/);
+assert.match(paymentChecklistHtml, /No new payment will be created/);
+assert.match(paymentChecklistHtml, /if \(incompletePayment\) \{ await recoverIncomplete\(incompletePayment\); return; \}/);
+assert.match(paymentChecklistHtml, /Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/);
+assert.match(paymentChecklistHtml, /async function run\(\) \{[\s\S]*?Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/, 'createPayment must remain inside the click target');
+assert.match(paymentChecklistHtml, /button\.addEventListener\('click', run\)/, 'the payment flow must require an explicit click');
+assert.match(paymentChecklistHtml, /SUCCESS: PioneerHub server completed the Testnet transaction/);
+assert.doesNotMatch(paymentChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
+
+const paymentChecklistLocked = await worker.fetch(new Request('https://example.test/diag/pi-payment-checklist'), {
+  ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'mainnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {},
+});
+assert.equal(paymentChecklistLocked.status, 503, 'payment checklist must fail closed outside Testnet');
+assert.doesNotMatch(await paymentChecklistLocked.text(), /createPayment|Pi SDK/i);
 
 const nativeFetchForAuth = globalThis.fetch;
 const storedSessions = [];

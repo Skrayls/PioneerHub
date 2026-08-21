@@ -3,9 +3,13 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "p0-ui-recovery-v1";
+const FRONTEND_BUILD = "testnet-payment-checklist-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
+const PI_PAYMENT_CHECKLIST_PATH = "/diag/pi-payment-checklist";
+const PI_PAYMENT_CHECKLIST_AMOUNT = 0.01;
+const PI_PAYMENT_CHECKLIST_MEMO = "PioneerHub Testnet Developer Portal verification";
+const PI_PAYMENT_CHECKLIST_METADATA = Object.freeze({ purpose: "developer_portal_checklist" });
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
@@ -172,6 +176,109 @@ function piAuthDiagnosticShell(nonce) {
   </script>
 </body>
 </html>`;
+}
+
+function piPaymentChecklistShell(nonce) {
+  return `<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>PioneerHub Testnet payment checklist</title>
+</head><body><main>
+  <h1>Pi Developer Portal payment checklist</h1>
+  <p><strong>TESTNET ONLY.</strong> TEST-PI HAS NO REAL VALUE. THIS IS A DEVELOPER PORTAL CONNECTIVITY TEST.</p>
+  <p>This isolated technical diagnostic is not a PioneerHub product feature or payment service.</p>
+  <button id="run-checklist-payment" type="button" disabled>Run Testnet checklist transaction</button>
+  <p id="payment-state" role="status" aria-live="polite">Checking the Testnet-only diagnostic environment…</p>
+</main>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
+(() => {
+  const amount = ${PI_PAYMENT_CHECKLIST_AMOUNT};
+  const memo = ${JSON.stringify(PI_PAYMENT_CHECKLIST_MEMO)};
+  const metadata = ${JSON.stringify(PI_PAYMENT_CHECKLIST_METADATA)};
+  const button = document.querySelector('#run-checklist-payment');
+  const state = document.querySelector('#payment-state');
+  let authorization = '';
+  let busy = false;
+  let incompletePayment = null;
+
+  const setState = message => { state.textContent = message; };
+  const boundedError = error => String(error?.message || error || 'unknown_error').replace(/[A-Za-z0-9_-]{24,}/g, '[redacted]').slice(0, 160);
+  const paymentIdOf = payment => typeof payment?.identifier === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(payment.identifier) ? payment.identifier : '';
+  const txidOf = payment => {
+    const txid = payment?.transaction?.txid;
+    return typeof txid === 'string' && /^[A-Za-z0-9_-]{1,240}$/.test(txid) ? txid : '';
+  };
+  async function serverPayment(paymentId, action, txid) {
+    const response = await fetch('/api/pi/payments/' + encodeURIComponent(paymentId) + '/' + action, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authorization },
+      body: JSON.stringify(action === 'complete' ? { txid } : {}),
+    });
+    if (!response.ok) throw new Error('server_' + action + '_failed');
+    const result = await response.json();
+    if (result?.state !== (action === 'approve' ? 'approved' : 'completed')) throw new Error('server_' + action + '_rejected');
+    return result;
+  }
+  async function authenticate() {
+    const result = await Pi.authenticate(['payments'], onIncompletePaymentFound);
+    const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result?.accessToken }) });
+    if (!response.ok) throw new Error('server_auth_failed');
+    const session = await response.json();
+    if (!session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_rejected');
+    authorization = session.authorization;
+  }
+  async function recoverIncomplete(payment) {
+    const paymentId = paymentIdOf(payment);
+    const txid = txidOf(payment);
+    incompletePayment = payment;
+    button.disabled = true;
+    if (!paymentId || !txid || !authorization) { setState('An incomplete Testnet payment was found. No new payment will be created; complete or cancel it in Pi Wallet, then reload this diagnostic.'); return; }
+    try {
+      setState('Recovering the existing Testnet payment through server completion…');
+      await serverPayment(paymentId, 'complete', txid);
+      setState('SUCCESS: the existing Testnet payment was completed by PioneerHub server. Revisit Developer Portal to confirm the checklist item.');
+    } catch { setState('An incomplete Testnet payment was found, but server completion is not yet confirmed. No new payment will be created.'); }
+  }
+  function onIncompletePaymentFound(payment) {
+    incompletePayment = payment || {};
+    button.disabled = true;
+    if (authorization) void recoverIncomplete(incompletePayment);
+    else setState('An incomplete Testnet payment was found. PioneerHub will check whether it can safely complete it after authentication; no new payment will be created.');
+  }
+  async function run() {
+    if (busy || incompletePayment) return;
+    busy = true; button.disabled = true;
+    try {
+      setState('Authenticating for the Testnet payment scope…');
+      await authenticate();
+      if (incompletePayment) { await recoverIncomplete(incompletePayment); return; }
+      const callbacks = {
+        onReadyForServerApproval: async paymentId => {
+          setState('Waiting for PioneerHub server approval…');
+          await serverPayment(paymentId, 'approve');
+          setState('Server approval complete. Confirm the Test-Pi transaction in Pi Wallet.');
+        },
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          setState('Confirming the submitted Testnet transaction with PioneerHub server…');
+          await serverPayment(paymentId, 'complete', txid);
+          setState('SUCCESS: PioneerHub server completed the Testnet transaction. Revisit Developer Portal to confirm the checklist item.');
+        },
+        onCancel: () => { setState('Testnet payment cancelled. No transaction was completed.'); },
+        onError: error => { setState('Testnet payment error: ' + boundedError(error)); },
+      };
+      setState('Opening the Testnet payment screen…');
+      await Pi.createPayment({ amount, memo, metadata }, callbacks);
+    } catch (error) { setState('Testnet checklist transaction did not start: ' + boundedError(error)); }
+    finally { busy = false; if (!incompletePayment) button.disabled = false; }
+  }
+  (async () => {
+    if (typeof Pi === 'undefined') { setState('Pi SDK is unavailable. Open this URL inside Pi Browser.'); return; }
+    try { await Pi.init({ version: "2.0" }); button.disabled = false; setState('Ready. This will create one 0.01 Test-Pi Developer Portal verification transaction only after you press the button.'); }
+    catch { setState('Pi SDK initialization failed. Open this URL inside Pi Browser.'); }
+  })();
+  button.addEventListener('click', run);
+})();
+</script></body></html>`;
 }
 
 function piSignInDiagnosticShell(nonce) {
@@ -354,6 +461,17 @@ export class PaymentLedger {
 
 export default { async fetch(request, env) {
   const url = new URL(request.url);
+  if (url.pathname === PI_PAYMENT_CHECKLIST_PATH && request.method === "GET") {
+    if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER || !env.AUTH_SESSIONS) return json({ error: "testnet_configuration_required" }, 503);
+    const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
+    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
+      "script-src 'self' https://sdk.minepi.com;",
+      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
+    );
+    return new Response(piPaymentChecklistShell(nonce), {
+      headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive", "Content-Security-Policy": contentSecurityPolicy },
+    });
+  }
   if (url.pathname === PI_AUTH_DIAGNOSTIC_PATH && request.method === "GET") {
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
     const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
