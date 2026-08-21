@@ -9,12 +9,12 @@ async function get(path) {
   return response;
 }
 
-const home = await get('/?build=p0-ui-recovery-v1');
+const home = await get('/?build=testnet-payment-checklist-v1');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
 const homeHtml = await home.text();
 assert.match(homeHtml, /PioneerHub/);
 assert.doesNotMatch(homeHtml, /Build:/);
-assert.match(homeHtml, /app\.js\?v=p0-ui-recovery-v1/);
+assert.match(homeHtml, /app\.js\?v=testnet-payment-checklist-v1/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
@@ -27,10 +27,10 @@ assert.match(home.headers.get('cache-control') || '', /no-store/, 'HTML shell mu
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
 assert.equal((await health.json()).status, 'ok');
-const css = await get('/styles.css?v=p0-ui-recovery-v1');
+const css = await get('/styles.css?v=testnet-payment-checklist-v1');
 assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /immutable/);
-const js = await get('/app.js?v=p0-ui-recovery-v1');
+const js = await get('/app.js?v=testnet-payment-checklist-v1');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
 assert.match(await js.text(), /FRONTEND-RUNTIME: PARKED/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
@@ -61,6 +61,17 @@ assert.match(diagnosticHtml, /AUTH_REJECTED/);
 assert.match(diagnosticHtml, /RUNTIME_CONTEXT/);
 assert.doesNotMatch(diagnosticHtml, /createPayment|\/api\/pi\/auth|beginPiSignIn|nativeFeaturesList/i);
 assert.match(diagnostic.headers.get('content-security-policy') || '', /https:\/\/sdk\.minepi\.com 'nonce-/);
+const paymentChecklist = await get('/diag/pi-payment-checklist');
+assert.equal(paymentChecklist.status, 200, 'Pi payment checklist diagnostic must return HTTP 200');
+const paymentChecklistHtml = await paymentChecklist.text();
+assert.match(paymentChecklistHtml, /TESTNET ONLY/);
+assert.match(paymentChecklistHtml, /Run Testnet checklist transaction/);
+assert.match(paymentChecklistHtml, /const amount = 0\.01;/);
+assert.match(paymentChecklistHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(paymentChecklistHtml, /Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/);
+assert.match(paymentChecklistHtml, /SUCCESS: PioneerHub server completed the Testnet transaction/);
+assert.match(paymentChecklist.headers.get('x-robots-tag') || '', /noindex/);
+assert.doesNotMatch(paymentChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
 const signInDiagnostic = await get('/diag/pi-signin');
 assert.equal(signInDiagnostic.status, 200, 'Pi Sign-In diagnostic must return HTTP 200');
 const signInHtml = await signInDiagnostic.text();

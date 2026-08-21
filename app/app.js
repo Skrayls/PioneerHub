@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'p0-ui-recovery-v1';
+const FRONTEND_BUILD = 'testnet-payment-checklist-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;
@@ -573,9 +573,9 @@ bindCommunity();
 const startReturnScript = document.createElement('script');
 const visualPolishStyles = document.createElement('link');
 visualPolishStyles.rel = 'stylesheet';
-visualPolishStyles.href = '/visual-polish.css?v=p0-ui-recovery-v1';
+visualPolishStyles.href = '/visual-polish.css?v=testnet-payment-checklist-v1';
 document.head.append(visualPolishStyles);
-startReturnScript.src = '/start-return-v1.js?v=p0-ui-recovery-v1';
+startReturnScript.src = '/start-return-v1.js?v=testnet-payment-checklist-v1';
 document.head.append(startReturnScript);
 
 document.querySelectorAll('#lab a').forEach((anchor) => {

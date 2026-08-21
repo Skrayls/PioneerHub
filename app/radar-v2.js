@@ -4,7 +4,7 @@
   const { FRESH_DAYS, DUE_DAYS, states: STATUS, freshnessFor } = evidence;
   const records = evidence.records.map(record => ({ ...record, status: record.evidenceState, unverified: record.limitations, finding: record.found }));
 
-  const injectCss = () => { if (!document.getElementById('radar-v2-style')) { const link = document.createElement('link'); link.id = 'radar-v2-style'; link.rel = 'stylesheet'; link.href = '/radar-v2.css?v=p0-ui-recovery-v1'; document.head.append(link); } };
+  const injectCss = () => { if (!document.getElementById('radar-v2-style')) { const link = document.createElement('link'); link.id = 'radar-v2-style'; link.rel = 'stylesheet'; link.href = '/radar-v2.css?v=testnet-payment-checklist-v1'; document.head.append(link); } };
   const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const dateFormat = value => new Intl.DateTimeFormat('lt-LT', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(`${value}T12:00:00Z`));
   const badge = record => { const fresh = freshnessFor(record.lastReviewed); return `<span class="radar-status ${STATUS[record.status].className}">${STATUS[record.status].label}</span><span class="freshness ${fresh.key}">${fresh.label}</span>`; };
