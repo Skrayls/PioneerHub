@@ -67,7 +67,7 @@ const paymentChecklistHtml = await paymentChecklist.text();
 assert.match(paymentChecklistHtml, /TESTNET ONLY/);
 assert.match(paymentChecklistHtml, /Run Testnet checklist transaction/);
 assert.match(paymentChecklistHtml, /const amount = 0\.01;/);
-assert.match(paymentChecklistHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(paymentChecklistHtml, /pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
 assert.match(paymentChecklistHtml, /Pi\.createPayment\(\{ amount, memo, metadata \}, callbacks\)/);
 assert.match(paymentChecklistHtml, /SUCCESS: PioneerHub server completed the Testnet transaction/);
 assert.match(paymentChecklist.headers.get('x-robots-tag') || '', /noindex/);
