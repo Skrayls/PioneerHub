@@ -8,20 +8,19 @@ Lithuanian Pioneers face fragmented information, phishing risk and uncertainty a
 
 - Pioneer: clear Lithuanian guidance, scam protection and credible app discovery.
 - Developer: transparent discovery/review and eventually testers/localization.
-- Merchant: later, safe education about direct Pi payments — not financial services.
+- Merchant: a browser-only operational readiness workflow before considering any Pi payment acceptance; not financial services or payment enablement.
 
 ## MVP
 
 1. **Learn** — eight action-led topics.
 2. **Safety Center** — non-negotiable wallet and scam safeguards.
 3. **App Radar** — disclosed editorial states, review rubric and sponsored-placement policy.
-4. **Payment Lab** — an explanation-only Testnet path; no real transaction.
+4. **Merchant Readiness Desk** — a private, browser-only assessment that turns an operating scenario into an ordered readiness plan; no payment setup.
 
 ## Core loop
 
-Question or risk → source-backed guide → useful action → save/share/return → discover another practical tool.
+Question, risk or operating scenario → bounded interactive workflow → safe next action → return when the situation/process changes.
 
 ## Out of scope
 
-Trading, price predictions, fiat conversion, wallet custody, KYC collection, marketplaces and paid access.
-
+Trading, price predictions, fiat conversion, wallet custody, KYC collection, marketplaces, paid access, merchant accounts, payment activation and real Pi processing.
