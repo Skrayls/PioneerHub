@@ -12,6 +12,7 @@ const routes = [
   ['/tikrinti-nuoroda', '#appInspector'],
   ['/pervedimo-repeticija', '#transferRehearsal'],
   ['/kyc-busena', '#kycStatusNavigator'],
+  ['/merchant-readiness', '#merchantReadiness'],
   ...['metodika', 'pi-browser', 'pi-wallet', 'fireside-forum', 'pi-chats', 'kyc', 'pi-launchpad', 'cidi-games'].map(slug => [`/radar/${slug}`, '#radarApp']),
   ['/prisidek', '#communitySignals'],
 ];
