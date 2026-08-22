@@ -31,3 +31,7 @@ The milestone needs no GitHub permission change, Cloudflare binding, DNS change,
 The rehearsal does not contact a customer, validate a merchant or transaction, determine legal/tax obligations, recommend accepting Pi, integrate a wallet, or provide financial advice. It cannot resolve an actual dispute.
 
 The useful action is a completed incident-response rehearsal: the merchant chooses a bounded scenario and sees its ordered first-response sequence. It is a semantic product outcome only while MUA aggregation remains parked.
+
+## Release record
+
+Production verified on 2026-08-22 through PR #66. Exact-head GitHub CI `32574145724` (including hosted rendered QA) and Workers Build `384eac66-9e19-4108-9cc2-793ae6f8ca13` passed before merge. Merged-main CI `32574204461`, targeted production smoke, and live rendered QA across all 33 public routes passed after deployment.
