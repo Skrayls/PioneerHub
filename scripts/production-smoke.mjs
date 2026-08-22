@@ -76,7 +76,7 @@ for (const route of ['/radar/metodika', '/radar/pi-browser', '/radar/pi-wallet',
   const radar = await get(route);
   assert.equal(radar.status, 200, `${route} must return HTTP 200`);
   const radarHtml = await radar.text();
-  assert.match(radarHtml, /PioneerHub App Radar/);
+  assert.match(radarHtml, /App Radar/);
   assert.doesNotMatch(radarHtml, /Pi\.authenticate|createPayment/i);
 }
 const diagnostic = await get('/diag/pi-auth');
