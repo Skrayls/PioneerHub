@@ -1,5 +1,7 @@
 # Project state
 
+> Historical planning record. Current release, Pi-support, and product-development state is maintained in [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md). In particular, the Testnet Developer Portal checklist is incomplete and parked with `PI_TESTNET_AUTH_SUPPORT_STATUS=WAITING_FOR_PI_SUPPORT`; it is not active product work.
+
 **Updated:** 2026-08-16
 **Stage:** 1 — Trust & Utility
 **Status:** active

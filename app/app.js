@@ -1,4 +1,4 @@
-const FRONTEND_BUILD = 'merchant-readiness-desk-v1';
+const FRONTEND_BUILD = 'merchant-operations-rehearsal-v1';
 // OAuth uses the least-privileged scope; Pi Browser requires payments scope for native app auth.
 const NATIVE_PI_AUTH_SCOPES = ['username', 'payments'];
 let piInitPromise = null;

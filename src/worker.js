@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "merchant-readiness-desk-v1";
+const FRONTEND_BUILD = "merchant-operations-rehearsal-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_PAYMENT_CHECKLIST_PATH = "/diag/pi-payment-checklist";
@@ -549,7 +549,7 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
-    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "transfer_rehearsal_start", "transfer_rehearsal_complete", "merchant_readiness_start", "merchant_readiness_complete", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
+    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "transfer_rehearsal_start", "transfer_rehearsal_complete", "merchant_readiness_start", "merchant_readiness_complete", "merchant_rehearsal_complete", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
     if (allowed.has(event)) console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }

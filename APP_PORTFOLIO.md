@@ -1,5 +1,7 @@
 # PioneerHub app portfolio candidates
 
+> Historical candidate scoring. The current portfolio decision is maintained in [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md): Merchant Operations Rehearsal V1 is the next scoped direction; the earlier Pi App Launch Checklist selection is superseded.
+
 ## Top 10 candidates
 
 | Idea | Problem | Pi role | MVP effort | Revenue potential | Risk | Score |

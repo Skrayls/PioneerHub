@@ -23,8 +23,9 @@
 - `suggest_app`
 - `community_cta`
 - `referral_open`
-- `payment_lab_start`
-- `payment_lab_complete`
+- `merchant_readiness_start`
+- `merchant_readiness_complete`
+- `merchant_rehearsal_complete`
 
 ## Payload rules
 
@@ -50,6 +51,6 @@ Not accepted intentionally:
 
 Current v1 definition:
 
-- one accepted allowlisted event = one useful action event occurrence.
+- one accepted allowlisted event = one useful action event occurrence. A completed Merchant Operations Rehearsal is specifically a merchant selecting a fixed incident and viewing its ordered first-response sequence.
 - this version does not create user identity, deduplication, or cross-session profiles.
 - before broad public acquisition, PioneerHub still needs one reliable aggregation/query path for monthly counts.

@@ -9,12 +9,12 @@ async function get(path) {
   return response;
 }
 
-const home = await get('/?build=merchant-readiness-desk-v1');
+const home = await get('/?build=merchant-operations-rehearsal-v1');
 assert.equal(home.status, 200, 'homepage must return HTTP 200');
 const homeHtml = await home.text();
 assert.match(homeHtml, /PioneerHub/);
 assert.doesNotMatch(homeHtml, /Build:/);
-assert.match(homeHtml, /app\.js\?v=merchant-readiness-desk-v1/);
+assert.match(homeHtml, /app\.js\?v=merchant-operations-rehearsal-v1/);
 assert.match(homeHtml, /href="\/merchant-readiness"/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
@@ -28,10 +28,10 @@ assert.match(home.headers.get('cache-control') || '', /no-store/, 'HTML shell mu
 const health = await get('/healthz');
 assert.equal(health.status, 200, 'health endpoint must return HTTP 200');
 assert.equal((await health.json()).status, 'ok');
-const css = await get('/styles.css?v=merchant-readiness-desk-v1');
+const css = await get('/styles.css?v=merchant-operations-rehearsal-v1');
 assert.equal(css.status, 200, 'CSS must return HTTP 200');
 assert.match(css.headers.get('cache-control') || '', /immutable/);
-const js = await get('/app.js?v=merchant-readiness-desk-v1');
+const js = await get('/app.js?v=merchant-operations-rehearsal-v1');
 assert.equal(js.status, 200, 'JS must return HTTP 200');
 assert.match(await js.text(), /FRONTEND-RUNTIME: PARKED/);
 assert.match(js.headers.get('cache-control') || '', /immutable/);
@@ -39,7 +39,7 @@ const merchant = await get('/merchant-readiness');
 assert.equal(merchant.status, 200, 'merchant readiness route must return HTTP 200');
 const merchantHtml = await merchant.text();
 assert.match(merchantHtml, /MERCHANT READINESS DESK/);
-assert.match(merchantHtml, /merchant-readiness\.js\?v=merchant-readiness-desk-v1/);
+assert.match(merchantHtml, /merchant-readiness\.js\?v=merchant-operations-rehearsal-v1/);
 assert.doesNotMatch(merchantHtml, /Pi\.authenticate|createPayment|mainnet/i);
 for (const route of ['/sauga', '/sauga/passphrase', '/sauga/itartina-nuoroda', '/sauga/pries-siunciant-pi']) {
   const safety = await get(route);
