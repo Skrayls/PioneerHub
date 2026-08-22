@@ -15,11 +15,10 @@ Objective: become the most useful independent Lithuanian Pi learning, safety and
 
 ### Shipping next
 
-- [ ] Release Pi Scam Shield MVP: free fixed-signal check, no wallet or personal-data input, and no payment flow.
+- [x] Release Pi Scam Shield MVP: free fixed-signal check, no wallet or personal-data input, and no payment flow.
 - [x] Publish first PioneerHub-tested App Radar records with dated limitations and no fabricated verdicts.
 - [x] Release Merchant Readiness Desk V1: private operational assessment and ordered launch-readiness plan; no payments, accounts, storage, or Mainnet.
-- [ ] Add Pi Auth readiness section to the live product with explicit disabled boundary.
-- [ ] Add Testnet Payment Lab educational walkthrough with event tracking and no real payments.
+- [ ] Release Merchant Operations Rehearsal V1 within the Desk: fixed incident-response practice for delay, cancellation, and suspicious requests; no customer contact, payments, accounts, storage, or Mainnet.
 - [ ] Document one privacy-safe way to aggregate MUA before broad community acquisition.
 
 ### Before broader public/community acquisition
@@ -32,9 +31,9 @@ Objective: become the most useful independent Lithuanian Pi learning, safety and
 
 ### Pi integration boundary
 
-- [ ] Pi Auth frontend/backend wiring up to the exact point where Developer Portal app configuration and API key are required.
-- [ ] Testnet Payment Lab frontend/backend wiring up to the exact point where Developer Portal Testnet app, domain validation and API key are required.
-- [ ] One consolidated Founder gate only when those credentials/configuration become the sole remaining blocker.
+- [ ] Pi Testnet Developer Portal checklist remains incomplete and parked: `PI_TESTNET_AUTH_SUPPORT_STATUS=WAITING_FOR_PI_SUPPORT`.
+- [ ] Do not change scopes or Portal configuration, repeat consent, request Pi Browser testing, or start Test-Pi transactions unless Pi Support supplies actionable information.
+- [ ] Mainnet remains prohibited; normal product payments remain locked.
 
 ## Stage 2 — First revenue
 

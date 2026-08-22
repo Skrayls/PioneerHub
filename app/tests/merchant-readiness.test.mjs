@@ -18,11 +18,17 @@ assert.match(script, /Grąžinimas \/ ginčas/);
 assert.match(script, /Sukčiavimas ir eskalavimas/);
 assert.match(script, /merchant_readiness_start/);
 assert.match(script, /merchant_readiness_complete/);
+assert.match(script, /VEIKLOS REPETICIJA/);
+assert.match(script, /Pristatymas vėluoja/);
+assert.match(script, /Klientas nori atšaukti/);
+assert.match(script, /Gaunu įtartiną prašymą/);
+assert.match(script, /merchant_rehearsal_complete/);
 assert.match(script, /\/sauga\/pries-siunciant-pi/);
 assert.doesNotMatch(`${shell}\n${script}`, /fetch\(|localStorage|sessionStorage|Pi\.authenticate|createPayment|type="(?:text|number|email)"/i);
 assert.match(css, /min-height:84px/);
 assert.ok(workerSource.includes('MERCHANT_READINESS_ROUTE = "/merchant-readiness"'));
 assert.match(workerSource, /merchant-readiness-shell\.txt/);
+assert.match(workerSource, /merchant_rehearsal_complete/);
 assert.match(home, /href="\/merchant-readiness"/);
 
 let assetPath = '';
@@ -32,6 +38,6 @@ const response = await worker.fetch(new Request('https://example.test/merchant-r
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/merchant-readiness-shell.txt');
-assert.match(html, /merchant-readiness\.css\?v=merchant-readiness-desk-v1/);
-assert.match(html, /merchant-readiness\.js\?v=merchant-readiness-desk-v1/);
+assert.match(html, /merchant-readiness\.css\?v=merchant-operations-rehearsal-v1/);
+assert.match(html, /merchant-readiness\.js\?v=merchant-operations-rehearsal-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);

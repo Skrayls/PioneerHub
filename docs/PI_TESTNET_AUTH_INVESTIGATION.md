@@ -57,9 +57,9 @@ The recovery makes **one** combined-scope attempt per explicit owner click. It d
 - **Possible:** a stale consent record, a Pi Browser consent-service/network issue, or a Pi platform regression can produce the internal SDK failure. The public SDK exposes no supported app API to reset, revoke, or inspect that state.
 - **Unsupported:** changing scope order, enabling `sandbox: true`, rotating the server API key, creating a wallet, or changing payment callbacks as a remedy for this pre-token authentication failure. No source supports those as fixes here.
 
-### Single owner configuration action
+### Support park
 
-In Pi Browser, open `develop.pi` → **PioneerHub Testnet Lab** → **App Details** → **App Configuration** → **Whitelist Users**. Leave the field **blank** to allow Testnet access, or ensure it contains the exact Pi username that will authenticate; save the configuration. Then make one retry at `/diag/pi-payment-checklist`. Do not change the network, Production URL, Development URL, sandbox setting, API key, or wallet settings.
+`PI_TESTNET_AUTH_SUPPORT_STATUS=WAITING_FOR_PI_SUPPORT`. The Pi Developer Support request has been submitted. The whitelist observation is retained as diagnostic context only; it is **not** an owner action while support is pending. Do not change Portal configuration, scopes, network, URLs, sandbox setting, API key, wallet, credentials, or diagnostic flow; do not retry consent, request Pi Browser testing, or initiate a Test-Pi transaction unless Pi Support provides actionable information. `TESTNET_DEVELOPER_CHECKLIST=INCOMPLETE` remains true and does not block normal product work.
 
 ### Ready-to-send Pi developer support report
 

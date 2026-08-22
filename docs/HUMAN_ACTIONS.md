@@ -1,6 +1,6 @@
 # PioneerHub human actions
 
-**Status: no current owner action.** `HUMAN_ACTION_REQUIRED=false` for Merchant Readiness Desk V1.
+**Status: no current owner action.** `HUMAN_ACTION_REQUIRED=false` for Merchant Operations Rehearsal V1.
 
 ## Pi Testnet support park
 
