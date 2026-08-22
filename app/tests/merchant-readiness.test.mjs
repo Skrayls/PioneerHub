@@ -38,6 +38,6 @@ const response = await worker.fetch(new Request('https://example.test/merchant-r
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/merchant-readiness-shell.txt');
-assert.match(html, /merchant-readiness\.css\?v=merchant-operations-rehearsal-v1/);
-assert.match(html, /merchant-readiness\.js\?v=merchant-operations-rehearsal-v1/);
+assert.match(html, /merchant-readiness\.css\?v=organic-discovery-readiness-v1/);
+assert.match(html, /merchant-readiness\.js\?v=organic-discovery-readiness-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);

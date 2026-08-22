@@ -3,7 +3,7 @@ const PI_API = "https://api.minepi.com/v2";
 const SESSION_TTL_SECONDS = 600;
 const PAYMENT_ID = /^[A-Za-z0-9_-]{1,160}$/;
 const TX_ID = /^[A-Za-z0-9_-]{1,240}$/;
-const FRONTEND_BUILD = "merchant-operations-rehearsal-v1";
+const FRONTEND_BUILD = "organic-discovery-readiness-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_PAYMENT_CHECKLIST_PATH = "/diag/pi-payment-checklist";
@@ -13,9 +13,46 @@ const PI_PAYMENT_CHECKLIST_METADATA = Object.freeze({ purpose: "developer_portal
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
-const SAFETY_CENTER_ROUTES = new Set(["/sauga", "/sauga/passphrase", "/sauga/itartina-nuoroda", "/sauga/pries-siunciant-pi"]);
-const RADAR_ROUTES = new Set(["/radar/metodika", "/radar/pi-browser", "/radar/pi-wallet", "/radar/fireside-forum", "/radar/pi-chats", "/radar/kyc", "/radar/pi-launchpad", "/radar/cidi-games"]);
-const LEARN_ROUTES = new Set(["/mokykis/pi-network", "/mokykis/balanso-busenos", "/mokykis/perkeltas-balansas", "/mokykis/perkeliamas-balansas", "/mokykis/nepatvirtintas-balansas", "/mokykis/mainnet", "/mokykis/pi-wallet", "/mokykis/kyc", "/mokykis/mainnet-checklist", "/mokykis/lockup", "/mokykis/referral-team", "/mokykis/security-circle", "/mokykis/kyc-validator", "/mokykis/node", "/mokykis/pi-browser-apps"]);
+const CANONICAL_ORIGIN = "https://pioneerhub.andriussimonaitis.workers.dev";
+const PUBLIC_ROUTE_INVENTORY = Object.freeze([
+  { path: "/", group: "Pagrindas", label: "PioneerHub", title: "PioneerHub — praktiškai apie Pi", description: "Aiškūs lietuviški Pi gidai, saugumo patikra ir skaidrus programėlių atradimas." },
+  { path: "/sauga", group: "Sauga", label: "Safety Center", title: "Pi saugumo veiksmai | PioneerHub", description: "Anoniminiai Pi saugumo veiksmai prieš dalijantis passphrase, atidarant nuorodą ar siunčiant Pi." },
+  { path: "/sauga/passphrase", group: "Sauga", label: "Wallet passphrase", title: "Pi wallet passphrase: ką daryti? | PioneerHub", description: "Aiškus Pi saugumo veiksmas, kai prašoma wallet passphrase, seed frazės ar privataus rakto." },
+  { path: "/sauga/itartina-nuoroda", group: "Sauga", label: "Įtartina Pi nuoroda", title: "Įtartina Pi nuoroda: saugus kitas žingsnis | PioneerHub", description: "Praktinis saugumo planas, kai gauni nepažįstamą Pi nuorodą, programėlę ar formą." },
+  { path: "/sauga/pries-siunciant-pi", group: "Sauga", label: "Prieš siunčiant Pi", title: "Prieš siunčiant Pi: saugos patikra | PioneerHub", description: "Trumpa anoniminė sprendimo patikra prieš atidarant wallet ar siunčiant Pi." },
+  { path: "/mokykis/pi-network", group: "Mokykis", label: "Pi Network", title: "Pi Network | Mokykis | PioneerHub", description: "Trumpas lietuviškas Pi Network paaiškinimas be kainų ar atlygio pažadų." },
+  { path: "/mokykis/balanso-busenos", group: "Mokykis", label: "Balance Dashboard", title: "Balance Dashboard | Mokykis | PioneerHub", description: "Kaip ramiai skaityti Pi balanso būsenas ir jų ribas." },
+  { path: "/mokykis/perkeltas-balansas", group: "Mokykis", label: "Migrated Balance", title: "Migrated Balance | Mokykis | PioneerHub", description: "Ką gali reikšti į Mainnet perkeltas Pi balansas." },
+  { path: "/mokykis/perkeliamas-balansas", group: "Mokykis", label: "Transferable Balance", title: "Transferable Balance | Mokykis | PioneerHub", description: "Kodėl perkeliamas Pi balansas yra būsena, o ne pažadas." },
+  { path: "/mokykis/nepatvirtintas-balansas", group: "Mokykis", label: "Unverified Balance", title: "Unverified Balance | Mokykis | PioneerHub", description: "Ką gali reikšti nepatvirtinta Pi balanso dalis." },
+  { path: "/mokykis/mainnet", group: "Mokykis", label: "Mainnet", title: "Pi Mainnet | Mokykis | PioneerHub", description: "Trumpas paaiškinimas, ką Pi Mainnet migracija gali reikšti tavo paskyrai." },
+  { path: "/mokykis/pi-wallet", group: "Mokykis", label: "Pi Wallet", title: "Pi Wallet | Mokykis | PioneerHub", description: "Kaip saugiai atidaryti Pi Wallet ir apsaugoti savo passphrase." },
+  { path: "/mokykis/kyc", group: "Mokykis", label: "KYC", title: "Pi KYC | Mokykis | PioneerHub", description: "Kodėl Pi KYC veiksmus reikia pradėti tik oficialioje aplinkoje." },
+  { path: "/mokykis/mainnet-checklist", group: "Mokykis", label: "Mainnet Checklist", title: "Pi Mainnet Checklist | Mokykis | PioneerHub", description: "Ką ramiai pasitikrinti savo Pi Mainnet Checklist." },
+  { path: "/mokykis/lockup", group: "Mokykis", label: "Lockup", title: "Pi Lockup | Mokykis | PioneerHub", description: "Ką Pi lockup gali reikšti prieinamumui ir sprendimams." },
+  { path: "/mokykis/referral-team", group: "Mokykis", label: "Referral Team", title: "Pi Referral Team | Mokykis | PioneerHub", description: "Neutralus paaiškinimas apie Pi Referral Team paskyros struktūrą." },
+  { path: "/mokykis/security-circle", group: "Mokykis", label: "Security Circle", title: "Pi Security Circle | Mokykis | PioneerHub", description: "Kaip saugiai suprasti Pi Security Circle pasitikėjimo dalį." },
+  { path: "/mokykis/kyc-validator", group: "Mokykis", label: "KYC Validator", title: "Pi KYC Validator | Mokykis | PioneerHub", description: "KYC Validator atsakomybės ir privatumo ribos Pi ekosistemoje." },
+  { path: "/mokykis/node", group: "Mokykis", label: "Pi Node", title: "Pi Node | Mokykis | PioneerHub", description: "Kam skirtas Pi Node ir nuo ko pradėti techninį dalyvavimą." },
+  { path: "/mokykis/pi-browser-apps", group: "Mokykis", label: "Pi Browser ir appsai", title: "Pi Browser ir appsai | Mokykis | PioneerHub", description: "Kaip saugiai pradėti naudoti Pi Browser ir Pi ekosistemos programėles." },
+  { path: "/radar/metodika", group: "App Radar", label: "App Radar metodika", title: "App Radar metodika | PioneerHub", description: "Kaip PioneerHub atskiria viešus įrodymus, nepatikrintą informaciją ir peržiūros ribas." },
+  { path: "/radar/pi-browser", group: "App Radar", label: "Pi Browser", title: "Pi Browser | App Radar | PioneerHub", description: "Viešų Pi Browser įrodymų, peržiūros ribų ir saugaus kito žingsnio įrašas." },
+  { path: "/radar/pi-wallet", group: "App Radar", label: "Pi Wallet", title: "Pi Wallet | App Radar | PioneerHub", description: "Viešų Pi Wallet įrodymų, peržiūros ribų ir saugaus kito žingsnio įrašas." },
+  { path: "/radar/fireside-forum", group: "App Radar", label: "Fireside Forum", title: "Fireside Forum | App Radar | PioneerHub", description: "Viešų Fireside Forum įrodymų, peržiūros ribų ir saugaus kito žingsnio įrašas." },
+  { path: "/radar/pi-chats", group: "App Radar", label: "Pi Chats", title: "Pi Chats | App Radar | PioneerHub", description: "Viešų Pi Chats įrodymų, peržiūros ribų ir saugaus kito žingsnio įrašas." },
+  { path: "/radar/kyc", group: "App Radar", label: "KYC", title: "Pi KYC | App Radar | PioneerHub", description: "Viešų Pi KYC įrodymų, peržiūros ribų ir saugaus kito žingsnio įrašas." },
+  { path: "/radar/pi-launchpad", group: "App Radar", label: "Pi Launchpad", title: "Pi Launchpad | App Radar | PioneerHub", description: "Viešų Pi Launchpad įrodymų ir nepatikrintų ribų įrašas." },
+  { path: "/radar/cidi-games", group: "App Radar", label: "CiDi Games", title: "CiDi Games | App Radar | PioneerHub", description: "Viešų CiDi Games įrodymų ir nepatikrintų ribų įrašas." },
+  { path: "/prisidek", group: "Įrankiai", label: "Prisidėk", title: "Prisidėk | PioneerHub", description: "Paruošk saugų PioneerHub bendruomenės pranešimą tik savo įrenginyje." },
+  { path: "/tikrinti-nuoroda", group: "Įrankiai", label: "Pi App Inspector", title: "Pi App Inspector: nuorodos patikra | PioneerHub", description: "Patikrink Pi nuorodos signalus savo naršyklėje, jos niekur neišsiunčiant." },
+  { path: "/pervedimo-repeticija", group: "Įrankiai", label: "Pervedimo repeticija", title: "Pi pavedimo repeticija | PioneerHub", description: "Anoniminė Pi pavedimo sprendimo repeticija prieš atidarant wallet." },
+  { path: "/kyc-busena", group: "Įrankiai", label: "KYC būsenos navigatorius", title: "Pi KYC būsenos navigatorius | PioneerHub", description: "Anoniminis Pi KYC būsenos klausimų navigatorius ir saugūs kiti žingsniai." },
+  { path: "/merchant-readiness", group: "Įrankiai", label: "Merchant Readiness Desk", title: "Merchant Readiness Desk | PioneerHub", description: "Privatus Pi prekybininko veiklos pasirengimo įvertinimas prieš svarstant mokėjimų priėmimą." },
+]);
+const PUBLIC_ROUTE_METADATA = new Map(PUBLIC_ROUTE_INVENTORY.map(route => [route.path, route]));
+const SAFETY_CENTER_ROUTES = new Set(PUBLIC_ROUTE_INVENTORY.filter(route => route.group === "Sauga").map(route => route.path));
+const RADAR_ROUTES = new Set(PUBLIC_ROUTE_INVENTORY.filter(route => route.group === "App Radar").map(route => route.path));
+const LEARN_ROUTES = new Set(PUBLIC_ROUTE_INVENTORY.filter(route => route.group === "Mokykis").map(route => route.path));
 const COMMUNITY_ROUTE = "/prisidek";
 const APP_INSPECTOR_ROUTE = "/tikrinti-nuoroda";
 const TRANSFER_REHEARSAL_ROUTE = "/pervedimo-repeticija";
@@ -27,8 +64,45 @@ const securityHeaders = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://pinet.com https://*.pinet.com https://minepi.com https://*.minepi.com; img-src 'self' data:; style-src 'self'; script-src 'self' https://sdk.minepi.com; connect-src 'self' https://api.minepi.com https://sdk.minepi.com; object-src 'none'; upgrade-insecure-requests",
+  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://pinet.com https://*.pinet.com https://minepi.com https://*.minepi.com; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; upgrade-insecure-requests",
 };
+
+const diagnosticContentSecurityPolicy = nonce => securityHeaders["Content-Security-Policy"]
+  .replace("script-src 'self';", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`)
+  .replace("connect-src 'self';", "connect-src 'self' https://api.minepi.com https://sdk.minepi.com;");
+
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+const canonicalUrl = path => `${CANONICAL_ORIGIN}${path}`;
+
+function publicMetadataHtml(route) {
+  const canonical = canonicalUrl(route.path);
+  return `<meta name="description" content="${escapeHtml(route.description)}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${escapeHtml(route.title)}"><meta property="og:description" content="${escapeHtml(route.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${canonical}">`;
+}
+
+function applyPublicMetadata(html, route) {
+  let output = html
+    .replace(/<html\b[^>]*>/i, '<html lang="lt">')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${escapeHtml(route.title)}</title>`)
+    .replace(/<meta\s+name=["']description["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, '')
+    .replace(/<meta\s+property=["']og:(?:title|description|type|url)["'][^>]*>\s*/gi, '');
+  if (!/<title\b/i.test(output)) output = output.replace('</head>', `<title>${escapeHtml(route.title)}</title></head>`);
+  return output.replace('</head>', `${publicMetadataHtml(route)}</head>`);
+}
+
+function publicRouteIndexHtml() {
+  const groups = ["Mokykis", "App Radar"];
+  return `<section class="section route-index" aria-labelledby="routeIndexTitle"><p class="eyebrow">NUORODŲ RODYKLĖ</p><h2 id="routeIndexTitle">Rask konkretų gidą arba viešą App Radar įrašą.</h2><p class="route-index-intro">Šios nuorodos yra tiesioginiai PioneerHub puslapiai: jose nurodoma, kas patikrinta, o kas lieka neaišku.</p><div class="route-index-groups">${groups.map(group => `<details${group === "Mokykis" ? " open" : ""}><summary>${group}</summary><ul>${PUBLIC_ROUTE_INVENTORY.filter(route => route.group === group).map(route => `<li><a href="${route.path}">${escapeHtml(route.label)}</a></li>`).join('')}</ul></details>`).join('')}</div></section>`;
+}
+
+function robotsTxt() {
+  return `User-agent: *\nAllow: /\nDisallow: /diag/\nDisallow: /api/\nDisallow: /events\nDisallow: /signin/\nSitemap: ${canonicalUrl("/sitemap.xml")}\n`;
+}
+
+function sitemapXml() {
+  const urls = PUBLIC_ROUTE_INVENTORY.map(route => `  <url><loc>${canonicalUrl(route.path)}</loc></url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
 
 const json = (body, status = 200, headers = {}) => Response.json(body, {
   status,
@@ -41,6 +115,7 @@ function piAuthDiagnosticShell(nonce) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
   <title>Pi Auth Isolation Harness</title>
 </head>
 <body>
@@ -333,7 +408,7 @@ function piPaymentChecklistShell(nonce) {
 
 function piSignInDiagnosticShell(nonce) {
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pi Sign-In Isolation Harness</title></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow, noarchive"><title>Pi Sign-In Isolation Harness</title></head>
 <body><main><h1>Pi Sign-In Isolation Harness</h1><p>Testnet-only diagnostic. No payments are created.</p><button id="pi-signin" type="button" disabled>SIGN IN WITH PI — USERNAME ONLY</button><ol id="diagnostic-log" aria-live="polite"></ol></main>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
 (() => {
@@ -511,45 +586,43 @@ export class PaymentLedger {
 
 export default { async fetch(request, env) {
   const url = new URL(request.url);
+  if (url.pathname === "/robots.txt" && request.method === "GET") {
+    return new Response(robotsTxt(), { headers: { ...securityHeaders, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400" } });
+  }
+  if (url.pathname === "/sitemap.xml" && request.method === "GET") {
+    return new Response(sitemapXml(), { headers: { ...securityHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" } });
+  }
   if (url.pathname === PI_PAYMENT_CHECKLIST_PATH && request.method === "GET") {
     if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER || !env.AUTH_SESSIONS) return json({ error: "testnet_configuration_required" }, 503);
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
-    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
-      "script-src 'self' https://sdk.minepi.com;",
-      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
-    );
+    const contentSecurityPolicy = diagnosticContentSecurityPolicy(nonce);
     return new Response(piPaymentChecklistShell(nonce), {
       headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive", "Content-Security-Policy": contentSecurityPolicy },
     });
   }
   if (url.pathname === PI_AUTH_DIAGNOSTIC_PATH && request.method === "GET") {
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
-    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
-      "script-src 'self' https://sdk.minepi.com;",
-      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
-    );
+    const contentSecurityPolicy = diagnosticContentSecurityPolicy(nonce);
     return new Response(piAuthDiagnosticShell(nonce), {
       headers: {
         ...securityHeaders,
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
         "Content-Security-Policy": contentSecurityPolicy,
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
       },
     });
   }
   if (url.pathname === PI_SIGNIN_DIAGNOSTIC_PATH && request.method === "GET") {
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
-    const contentSecurityPolicy = securityHeaders["Content-Security-Policy"].replace(
-      "script-src 'self' https://sdk.minepi.com;",
-      `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`,
-    );
+    const contentSecurityPolicy = diagnosticContentSecurityPolicy(nonce);
     return new Response(piSignInDiagnosticShell(nonce), {
-      headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": contentSecurityPolicy },
+      headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": contentSecurityPolicy, "X-Robots-Tag": "noindex, nofollow, noarchive" },
     });
   }
   if (url.pathname === "/events" && request.method === "POST") {
     const event = (await request.text()).trim();
-    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "referral_open", "transfer_rehearsal_start", "transfer_rehearsal_complete", "merchant_readiness_start", "merchant_readiness_complete", "merchant_rehearsal_complete", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
+    const allowed = new Set(["learn_article_open", "safety_check_start", "safety_check_complete", "scam_shield_start", "scam_shield_complete", "app_radar_view", "app_open_external", "report_scam", "suggest_app", "community_cta", "transfer_rehearsal_start", "transfer_rehearsal_complete", "merchant_readiness_start", "merchant_readiness_complete", "merchant_rehearsal_complete", "payment_lab_start", "payment_lab_complete", "pi_auth_start", "pi_auth_complete", "pi_incomplete_payment_callback", "testnet_payment_start", "testnet_payment_complete"]);
     if (allowed.has(event)) console.log(JSON.stringify({ event, kind: "mua", version: env.RELEASE_ID || "unmarked" }));
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }
@@ -607,13 +680,13 @@ export default { async fetch(request, env) {
   const isShell = isSafetyCenterRoute || isRadarRoute || isLearnRoute || isCommunityRoute || isAppInspectorRoute || isTransferRehearsalRoute || isKycStatusNavigatorRoute || isMerchantReadinessRoute || response.headers.get("Content-Type")?.includes("text/html");
   const isVersionedAsset = url.searchParams.get("v") === FRONTEND_BUILD && url.pathname.match(/\.(?:css|js)$/);
   headers.set("Cache-Control", isShell ? "no-store" : isVersionedAsset ? "public, max-age=31536000, immutable" : response.status === 200 && url.pathname.match(/\.(?:css|png|jpg|svg|woff2)$/) ? "public, max-age=86400" : "no-cache");
-  if (env.APP_ENV !== "production") headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  if (env.APP_ENV !== "production" || isSignInCallback) headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   if (isShell) {
     const version = `?v=${FRONTEND_BUILD}`;
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
     const shellStatus = `<!-- PioneerHub build: ${FRONTEND_BUILD}; technical status is available through /healthz and diagnostic routes. -->`;
-    if (isSignInCallback) headers.set("Content-Security-Policy", securityHeaders["Content-Security-Policy"].replace("script-src 'self' https://sdk.minepi.com;", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`));
-    const html = (await response.text())
+    if (isSignInCallback) headers.set("Content-Security-Policy", diagnosticContentSecurityPolicy(nonce));
+    let html = (await response.text())
       .replaceAll('href="styles.css"', `href="/styles.css${version}"`)
       .replaceAll('href="safety-center.css"', `href="/safety-center.css${version}"`)
       .replaceAll('src="safety-center.js"', `src="/safety-center.js${version}"`)
@@ -639,6 +712,11 @@ export default { async fetch(request, env) {
       .replace("Testnet mokėjimas dar nevykdomas", "Testnet mokėjimas užrakintas iki patikrinto prisijungimo")
       .replace("</section>\n<section id=\"community\"", `${shellStatus}</section>\n<section id="community"`)
       .replace("</body>", isSignInCallback ? `${piSignInCallbackBootstrap(nonce, version)}</body>` : "</body>");
+    const route = PUBLIC_ROUTE_METADATA.get(url.pathname);
+    if (route) {
+      html = applyPublicMetadata(html, route);
+      if (url.pathname === "/") html = html.replace("</main>", `${publicRouteIndexHtml()}</main>`);
+    }
     return new Response(html, { status: response.status, statusText: response.statusText, headers });
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

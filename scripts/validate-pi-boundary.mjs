@@ -11,11 +11,8 @@ const [config, html, app, localVars, worker] = await Promise.all([
 
 assert.match(config, /"PI_NETWORK": "testnet"/);
 assert.match(config, /"PI_NETWORK": "testnet"/);
-assert.match(app, /const NATIVE_PI_AUTH_SCOPES = \['username', 'payments'\]/);
-assert.match(app, /pi\.authenticate\(NATIVE_PI_AUTH_SCOPES, incompletePayment\)/);
-assert.match(app, /AUTH-PI-AUTHENTICATE-TIMEOUT/);
-assert.match(app, /getNativePiBridge\(\)/);
-assert.doesNotMatch(app, /pi\.createPayment\(/);
+assert.doesNotMatch(app, /Pi\.authenticate|Pi\.init|Pi\.signIn|\/api\/pi\/auth|createPayment/);
+assert.doesNotMatch(html, /sdk\.minepi\.com|Testnet Payment Lab|Pi Auth diagnostika/i);
 assert.doesNotMatch(app, /sandbox:\s*true/);
 assert.doesNotMatch(config, /mainnet/i);
 assert.match(localVars, /PI_TESTNET_API_KEY=/);

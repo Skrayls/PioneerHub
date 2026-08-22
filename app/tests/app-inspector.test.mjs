@@ -28,8 +28,8 @@ assert.doesNotMatch(script, /fetch\(|sendBeacon|localStorage|sessionStorage|Pi\.
 assert.match(css, /min-height:48px/);
 assert.match(workerSource, /APP_INSPECTOR_ROUTE = "\/tikrinti-nuoroda"/);
 assert.match(workerSource, /app-inspector-shell\.txt/);
-assert.match(workerSource, /const FRONTEND_BUILD = "merchant-operations-rehearsal-v1"/);
-assert.match(config, /"RELEASE_ID": "2026-08-22-merchant-operations-rehearsal-v1"/);
+assert.match(workerSource, /const FRONTEND_BUILD = "organic-discovery-readiness-v1"/);
+assert.match(config, /"RELEASE_ID": "2026-08-22-organic-discovery-readiness-v1"/);
 
 let assetPath = '';
 const response = await worker.fetch(new Request('https://example.test/tikrinti-nuoroda'), {
@@ -38,6 +38,6 @@ const response = await worker.fetch(new Request('https://example.test/tikrinti-n
 const html = await response.text();
 assert.equal(response.status, 200);
 assert.equal(assetPath, '/app-inspector-shell.txt');
-assert.match(html, /app-inspector\.css\?v=merchant-operations-rehearsal-v1/);
-assert.match(html, /app-inspector\.js\?v=merchant-operations-rehearsal-v1/);
+assert.match(html, /app-inspector\.css\?v=organic-discovery-readiness-v1/);
+assert.match(html, /app-inspector\.js\?v=organic-discovery-readiness-v1/);
 assert.match(response.headers.get('cache-control') || '', /no-store/);
