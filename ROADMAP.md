@@ -17,7 +17,7 @@ Objective: become the most useful independent Lithuanian Pi learning, safety and
 
 - [ ] Release Pi Scam Shield MVP: free fixed-signal check, no wallet or personal-data input, and no payment flow.
 - [x] Publish first PioneerHub-tested App Radar records with dated limitations and no fabricated verdicts.
-- [ ] Release Merchant Readiness Desk V1: private operational assessment and ordered launch-readiness plan; no payments, accounts, storage, or Mainnet.
+- [x] Release Merchant Readiness Desk V1: private operational assessment and ordered launch-readiness plan; no payments, accounts, storage, or Mainnet.
 - [ ] Add Pi Auth readiness section to the live product with explicit disabled boundary.
 - [ ] Add Testnet Payment Lab educational walkthrough with event tracking and no real payments.
 - [ ] Document one privacy-safe way to aggregate MUA before broad community acquisition.
