@@ -247,6 +247,15 @@ assert.equal(validationFile.headers.get('referrer-policy'), 'no-referrer');
 assert.equal(validationFile.headers.get('x-frame-options'), 'DENY');
 assert.match(validationFile.headers.get('content-security-policy'), /default-src 'none'/);
 
+let googleVerificationAssetFetch = false;
+const googleVerification = await worker.fetch(new Request('https://example.test/google98bd6643f67a7345.html'), {
+  ASSETS: { fetch: async () => { googleVerificationAssetFetch = true; return new Response('unreachable'); } },
+});
+assert.equal(googleVerification.status, 200);
+assert.equal(await googleVerification.text(), 'google-site-verification: google98bd6643f67a7345.html');
+assert.equal(googleVerification.headers.get('content-type'), 'text/plain; charset=utf-8');
+assert.equal(googleVerificationAssetFetch, false, 'Google Search Console verification must bypass app assets');
+
 const event = await worker.fetch(new Request('https://example.test/events', { method: 'POST', body: 'safety_check_complete' }), { ASSETS: { fetch: async () => new Response('unreachable') }, APP_ENV: 'production' });
 assert.equal(event.status, 204);
 

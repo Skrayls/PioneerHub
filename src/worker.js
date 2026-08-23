@@ -14,6 +14,8 @@ const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
 const CANONICAL_ORIGIN = "https://pioneerhub.andriussimonaitis.workers.dev";
+const GOOGLE_SEARCH_CONSOLE_VERIFICATION_PATH = "/google98bd6643f67a7345.html";
+const GOOGLE_SEARCH_CONSOLE_VERIFICATION_CONTENT = "google-site-verification: google98bd6643f67a7345.html";
 const PUBLIC_ROUTE_INVENTORY = Object.freeze([
   { path: "/", group: "Pagrindas", label: "PioneerHub", title: "PioneerHub — praktiškai apie Pi", description: "Aiškūs lietuviški Pi gidai, saugumo patikra ir skaidrus programėlių atradimas." },
   { path: "/sauga", group: "Sauga", label: "Safety Center", title: "Pi saugumo veiksmai | PioneerHub", description: "Anoniminiai Pi saugumo veiksmai prieš dalijantis passphrase, atidarant nuorodą ar siunčiant Pi." },
@@ -591,6 +593,9 @@ export default { async fetch(request, env) {
   }
   if (url.pathname === "/sitemap.xml" && request.method === "GET") {
     return new Response(sitemapXml(), { headers: { ...securityHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=86400" } });
+  }
+  if (url.pathname === GOOGLE_SEARCH_CONSOLE_VERIFICATION_PATH && request.method === "GET") {
+    return new Response(GOOGLE_SEARCH_CONSOLE_VERIFICATION_CONTENT, { headers: { ...securityHeaders, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400" } });
   }
   if (url.pathname === PI_PAYMENT_CHECKLIST_PATH && request.method === "GET") {
     if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER || !env.AUTH_SESSIONS) return json({ error: "testnet_configuration_required" }, 503);
