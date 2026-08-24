@@ -77,6 +77,7 @@ const securityHeaders = {
 };
 
 const diagnosticContentSecurityPolicy = nonce => securityHeaders["Content-Security-Policy"]
+  .replace("style-src 'self';", `style-src 'self' 'nonce-${nonce}';`)
   .replace("script-src 'self';", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`)
   .replace("connect-src 'self';", "connect-src 'self' https://api.minepi.com https://sdk.minepi.com;");
 
