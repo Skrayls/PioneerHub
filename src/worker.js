@@ -430,10 +430,27 @@ function piSandboxChecklistShell(nonce) {
   // These are application-generated diagnostic codes, not credentials. Keep this
   // deliberately finite so the general long-string redaction still protects IDs
   // and tokens returned by SDK or network errors.
-  const safeDiagnosticCodes = new Set(['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED']);
-  const redact = value => { value = String(value || ''); if (safeDiagnosticCodes.has(value)) return value; return value.replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240); };
+  const safeDiagnosticCodes = new Set(['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED', 'AUTHENTICATION_FAILED', 'AUTH_PI_PRIMARY_FAILED', 'AUTH_PI_CONSENT_SCOPE_FAILED', 'AUTH_PI_INIT_FAILED']);
+  const redact = value => { value = String(value || ''); if (safeDiagnosticCodes.has(value)) return value; return value.replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(["']?(?:access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)["']?\\s*[:=]\\s*["']?)([^\\s&,;"']+)/gi, '$1[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240); };
   const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
   const setState = value => { state.textContent = value; };
+  const numericStatus = error => ['status', 'statusCode', 'httpStatus', 'http_status'].map(key => error?.[key]).find(value => typeof value === 'number' && Number.isFinite(value));
+  const piAuthErrorDetails = error => ({
+    name: redact(error?.name || ''),
+    message: redact(error?.message || ''),
+    code: redact(error?.code || ''),
+    type: redact(error?.type || ''),
+    status: numericStatus(error),
+  });
+  const renderPiAuthError = (rejectionKind, error) => {
+    const details = piAuthErrorDetails(error);
+    render('PI_AUTHENTICATE_REJECTION_KIND', rejectionKind);
+    render('PI_AUTHENTICATE_ERROR_NAME', details.name || '[absent]');
+    render('PI_AUTHENTICATE_ERROR_MESSAGE', details.message || '[absent]');
+    render('PI_AUTHENTICATE_ERROR_CODE', details.code || '[absent]');
+    render('PI_AUTHENTICATE_ERROR_TYPE', details.type || '[absent]');
+    render('PI_AUTHENTICATE_ERROR_STATUS', details.status === undefined ? '[absent]' : String(details.status));
+  };
   const failure = error => { const message = String(error?.message || error || 'unknown').toLowerCase(); return /init|sdk/.test(message) ? 'SANDBOX_INIT_FAILED' : /token/.test(message) ? 'AUTH_ACCESS_TOKEN_MISSING' : /server/.test(message) ? 'SERVER_VERIFICATION_FAILED' : 'SANDBOX_AUTH_OR_PAYMENT_FAILED'; };
   const paymentIdOf = payment => typeof payment?.identifier === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(payment.identifier) ? payment.identifier : '';
   const txidOf = payment => typeof payment?.transaction?.txid === 'string' && /^[A-Za-z0-9_-]{1,240}$/.test(payment.transaction.txid) ? payment.transaction.txid : '';
@@ -452,7 +469,22 @@ function piSandboxChecklistShell(nonce) {
   }
   async function authenticate() {
     await initialize(); render('PI_AUTHENTICATE_STARTED', JSON.stringify(scopes));
-    const result = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+    render('PI_AUTH_RUNTIME_CONTEXT', JSON.stringify({ sandboxMode: true, origin: location.origin, topLevel: window.top === window.self, sdkPresent: typeof Pi !== 'undefined', scopesRequested: scopes, piInitResolved: initialized }));
+    let authPromise;
+    try {
+      authPromise = Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+      render('PI_AUTHENTICATE_RETURNED', authPromise && typeof authPromise.then === 'function' ? 'thenable' : typeof authPromise);
+    } catch (error) {
+      renderPiAuthError('synchronous_throw', error);
+      throw error;
+    }
+    let result;
+    try {
+      result = await authPromise;
+    } catch (error) {
+      renderPiAuthError('promise_rejection', error);
+      throw error;
+    }
     render('PI_AUTHENTICATE_COMPLETE', JSON.stringify({ accessTokenExists: Boolean(result?.accessToken), uidExists: Boolean(result?.user?.uid), usernameExists: Boolean(result?.user?.username) }));
     if (typeof result?.accessToken !== 'string' || !result.accessToken || !result?.user?.uid) throw new Error('access_token_or_user_missing');
     const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result.accessToken }) });
