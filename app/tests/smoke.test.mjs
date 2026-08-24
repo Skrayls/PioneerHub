@@ -226,6 +226,9 @@ assert.match(sandboxChecklistHtml, /PioneerHub Testnet Developer Portal checklis
 assert.match(sandboxChecklistHtml, /purpose":"developer_portal_checklist/);
 assert.match(sandboxChecklistHtml, /\/api\/pi\/sandbox-checklist\/payments\//);
 assert.match(sandboxChecklistHtml, /CHECKLIST PAYMENT COMPLETE/);
+assert.match(sandboxChecklistHtml, /const safeDiagnosticCodes = new Set\(\['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED'\]\);/, 'Sandbox diagnostic codes must remain visible to support troubleshooting');
+assert.match(sandboxChecklistHtml, /if \(safeDiagnosticCodes\.has\(value\)\) return value;/, 'Only explicitly allowlisted diagnostic codes may bypass generic long-string redaction');
+assert.match(sandboxChecklistHtml, /replace\(\/\[A-Za-z0-9_-\]\{24,\}\/g, '\[REDACTED\]'\)/, 'Long SDK identifiers and tokens must remain redacted');
 assert.doesNotMatch(sandboxChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
 assert.match(sandboxChecklistHtml, /Mainnet capability: false\./);
 
