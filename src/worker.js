@@ -415,7 +415,18 @@ function piPaymentChecklistShell(nonce) {
 function piSandboxChecklistShell(nonce) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow, noarchive"><title>Pi Sandbox Testnet checklist</title></head>
-<body><main><p><strong>PI SANDBOX · TESTNET CHECKLIST ONLY.</strong></p><h1>Pi Developer Portal Sandbox transaction checklist</h1><p>This isolated diagnostic is not a PioneerHub product feature. It never collects wallet credentials or connects to a real-value network.</p><p>Mainnet capability: false.</p><ol id="checklist-state" aria-live="polite"><li>1. SDK loaded</li><li>2. Sandbox init complete</li><li>3. Pi authenticate started</li><li>4. Pi authenticate complete</li><li>5. Server auth verification complete</li><li>6. Ready to create 0.01 Test-Pi payment</li><li>7. Payment created</li><li>8. Server approval complete</li><li>9. Waiting for Pioneer/Testnet wallet</li><li>10. Transaction received</li><li>11. Server completion complete</li><li>12. CHECKLIST PAYMENT COMPLETE</li></ol><button id="sandbox-authenticate" type="button" disabled>Authenticate</button><button id="sandbox-create-payment" type="button" disabled>Create 0.01 Test-Pi checklist payment</button><p id="sandbox-state" role="status" aria-live="polite">Loading isolated Sandbox diagnostic…</p><ol id="sandbox-diagnostic-log" aria-live="polite"></ol></main>
+<style>
+  :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #18233b; background: #f4f7fc; }
+  * { box-sizing: border-box; } body { margin: 0; min-width: 320px; } main { width: min(100%, 760px); margin: 0 auto; padding: 24px 18px 48px; }
+  .eyebrow { margin: 0 0 12px; color: #51647f; font-size: .76rem; font-weight: 800; letter-spacing: .08em; } h1 { max-width: 16ch; margin: 0; font-size: clamp(2rem, 8vw, 3.45rem); line-height: 1.04; letter-spacing: -.045em; } .intro { margin: 18px 0 24px; max-width: 60ch; color: #526078; line-height: 1.6; }
+  .notice { display: flex; gap: 10px; align-items: start; margin: 0 0 20px; padding: 13px 14px; border: 1px solid #c9d7ef; border-radius: 14px; background: #eaf1ff; color: #29466f; font-size: .92rem; line-height: 1.45; } .notice b { white-space: nowrap; }
+  .flow { display: flex; gap: 8px; margin: 0 0 18px; color: #5b6b86; font-size: .75rem; font-weight: 800; letter-spacing: .03em; } .flow span { display: inline-flex; align-items: center; gap: 8px; } .flow span + span::before { content: "→"; color: #99a9c2; }
+  .grid { display: grid; gap: 14px; } .card { padding: 20px; border: 1px solid #d9e1ed; border-radius: 18px; background: #fff; box-shadow: 0 8px 28px rgba(34, 57, 96, .06); } .tag { display: inline-block; margin: 0 0 10px; color: #315db5; font-size: .72rem; font-weight: 850; letter-spacing: .075em; } .card h2 { margin: 0; font-size: 1.22rem; letter-spacing: -.02em; } .card p { margin: 9px 0 16px; color: #5d6b80; line-height: 1.5; }
+  button { min-height: 46px; width: 100%; border: 0; border-radius: 12px; padding: 10px 16px; background: #2558bd; color: #fff; font: inherit; font-weight: 750; cursor: pointer; } button:hover:not(:disabled) { background: #194698; } button:disabled { cursor: not-allowed; background: #e8edf5; color: #92a0b5; } .amount { display: flex; align-items: baseline; gap: 7px; margin: 12px 0 2px; font-size: 1.75rem; font-weight: 820; letter-spacing: -.04em; } .amount small { color: #65738b; font-size: .8rem; font-weight: 700; letter-spacing: 0; }
+  #sandbox-state { margin: 18px 0 0; padding: 14px 15px; border-left: 4px solid #6387d3; border-radius: 8px; background: #eef3fb; color: #334a70; line-height: 1.5; } details { margin-top: 22px; border-top: 1px solid #d9e1ed; } summary { padding: 16px 0; cursor: pointer; color: #526078; font-weight: 750; } #sandbox-diagnostic-log { margin: 0 0 8px; padding: 0 0 0 22px; color: #516079; font: .78rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; } #sandbox-diagnostic-log li { padding: 2px 0; }
+  @media (min-width: 620px) { main { padding-top: 44px; } .grid { grid-template-columns: 1fr 1fr; } .card { min-height: 280px; display: flex; flex-direction: column; } .card button { margin-top: auto; } }
+</style>
+<body><main><p class="eyebrow">PI SANDBOX · TESTNET CHECKLIST ONLY</p><h1>Sandbox Testnet Payment Lab</h1><p class="intro">Isolated technical harness for the Pi Developer Portal transaction requirement. It is not a public PioneerHub feature and cannot use Mainnet.</p><p class="notice"><b>TESTNET ONLY</b><span>Mainnet capability: false. PioneerHub does not collect wallet credentials or show normal product navigation here.</span></p><p class="flow"><span>AUTH</span><span>SERVER VERIFIED</span><span>0.01 TEST-PI</span><span>COMPLETE</span></p><section class="grid" aria-label="Sandbox payment lab"><article class="card"><p class="tag">PI AUTH · TESTNET SANDBOX ONLY</p><h2>Minimalus Pi Sandbox Auth testas</h2><p>Nėra el. pašto, slaptažodžio ar piniginės importo. Prieigos tokenas perduodamas tik serveriniam <code>/v2/me</code> patikrinimui ir nerodomas šiame puslapyje.</p><button id="sandbox-authenticate" type="button" disabled>Prisijungti per Pi Sandbox</button></article><article class="card"><p class="tag">PAYMENT LAB · TESTNET SANDBOX ONLY</p><h2>Ribotas kontrolinis mokėjimas</h2><p class="amount">0.01 <small>Test-Pi</small></p><p>Fiksuota paskirtis: PioneerHub Testnet Developer Portal checklist. Mygtukas atsirakina tik po Pi ir serverio patvirtinimo.</p><button id="sandbox-create-payment" type="button" disabled>Pirma prisijunk per Pi Sandbox</button></article></section><p id="sandbox-state" role="status" aria-live="polite">Loading isolated Sandbox diagnostic…</p><details><summary>Techninė diagnostika</summary><ol id="sandbox-diagnostic-log" aria-live="polite"></ol></details></main>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
 (() => {
   const amount = ${PI_SANDBOX_CHECKLIST_AMOUNT};
@@ -425,7 +436,7 @@ function piSandboxChecklistShell(nonce) {
   const paymentButton = document.querySelector('#sandbox-create-payment');
   const state = document.querySelector('#sandbox-state');
   const log = document.querySelector('#sandbox-diagnostic-log');
-  const scopes = ['username', 'payments'];
+  const scopes = ['payments'];
   let authorization = ''; let incompletePayment = null; let busy = false; let initialized = false;
   // These are application-generated diagnostic codes, not credentials. Keep this
   // deliberately finite so the general long-string redaction still protects IDs
@@ -472,7 +483,7 @@ function piSandboxChecklistShell(nonce) {
     render('PI_AUTH_RUNTIME_CONTEXT', JSON.stringify({ sandboxMode: true, origin: location.origin, topLevel: window.top === window.self, sdkPresent: typeof Pi !== 'undefined', scopesRequested: scopes, piInitResolved: initialized }));
     let authPromise;
     try {
-      authPromise = Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+      authPromise = Pi.authenticate(['payments'], onIncompletePaymentFound);
       render('PI_AUTHENTICATE_RETURNED', authPromise && typeof authPromise.then === 'function' ? 'thenable' : typeof authPromise);
     } catch (error) {
       renderPiAuthError('synchronous_throw', error);
@@ -485,14 +496,14 @@ function piSandboxChecklistShell(nonce) {
       renderPiAuthError('promise_rejection', error);
       throw error;
     }
-    render('PI_AUTHENTICATE_COMPLETE', JSON.stringify({ accessTokenExists: Boolean(result?.accessToken), uidExists: Boolean(result?.user?.uid), usernameExists: Boolean(result?.user?.username) }));
+    render('PI_AUTHENTICATE_COMPLETE', JSON.stringify({ accessTokenExists: Boolean(result?.accessToken), uidExists: Boolean(result?.user?.uid) }));
     if (typeof result?.accessToken !== 'string' || !result.accessToken || !result?.user?.uid) throw new Error('access_token_or_user_missing');
     const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result.accessToken }) });
     const session = await response.json().catch(() => ({}));
     if (!response.ok || !session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_failed');
     authorization = session.authorization; render('SERVER_AUTH_VERIFICATION_COMPLETE');
     if (incompletePayment) { setState('Incomplete payment found. No new payment will be created.'); return; }
-    paymentButton.disabled = false; setState('Ready to create exactly 0.01 Test-Pi in Pi Sandbox.');
+    paymentButton.disabled = false; paymentButton.textContent = 'Sukurti 0.01 Test-Pi mokėjimą'; setState('Testnet prisijungimas patikrintas serveryje. Galite sukurti tiksliai 0.01 Test-Pi mokėjimą.');
   }
   async function recoverIncomplete(payment) {
     const paymentId = paymentIdOf(payment); const txid = txidOf(payment);
