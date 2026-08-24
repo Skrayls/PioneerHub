@@ -226,9 +226,21 @@ assert.match(sandboxChecklistHtml, /PioneerHub Testnet Developer Portal checklis
 assert.match(sandboxChecklistHtml, /purpose":"developer_portal_checklist/);
 assert.match(sandboxChecklistHtml, /\/api\/pi\/sandbox-checklist\/payments\//);
 assert.match(sandboxChecklistHtml, /CHECKLIST PAYMENT COMPLETE/);
-assert.match(sandboxChecklistHtml, /const safeDiagnosticCodes = new Set\(\['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED'\]\);/, 'Sandbox diagnostic codes must remain visible to support troubleshooting');
+assert.match(sandboxChecklistHtml, /const safeDiagnosticCodes = new Set\(\['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED', 'AUTHENTICATION_FAILED'/, 'Sandbox diagnostic codes must remain visible to support troubleshooting');
 assert.match(sandboxChecklistHtml, /if \(safeDiagnosticCodes\.has\(value\)\) return value;/, 'Only explicitly allowlisted diagnostic codes may bypass generic long-string redaction');
 assert.match(sandboxChecklistHtml, /replace\(\/\[A-Za-z0-9_-\]\{24,\}\/g, '\[REDACTED\]'\)/, 'Long SDK identifiers and tokens must remain redacted');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_REJECTION_KIND/, 'Sandbox auth failures must disclose whether the SDK threw synchronously or rejected its Promise');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_ERROR_NAME/, 'Sandbox diagnostics must separately report the safe Pi error name');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_ERROR_MESSAGE/, 'Sandbox diagnostics must separately report the safe Pi error message');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_ERROR_CODE/, 'Sandbox diagnostics must separately report the safe Pi error code');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_ERROR_TYPE/, 'Sandbox diagnostics must separately report the safe Pi error type');
+assert.match(sandboxChecklistHtml, /PI_AUTHENTICATE_ERROR_STATUS/, 'Sandbox diagnostics must separately report a numeric Pi error status when available');
+assert.match(sandboxChecklistHtml, /PI_AUTH_RUNTIME_CONTEXT/, 'Sandbox diagnostics must capture safe auth runtime context');
+assert.match(sandboxChecklistHtml, /sandboxMode: true/, 'Sandbox diagnostics must explicitly record sandbox mode');
+assert.match(sandboxChecklistHtml, /renderPiAuthError\('synchronous_throw', error\)/, 'Sandbox diagnostics must distinguish synchronous Pi.authenticate throws');
+assert.match(sandboxChecklistHtml, /renderPiAuthError\('promise_rejection', error\)/, 'Sandbox diagnostics must distinguish Pi.authenticate Promise rejections');
+assert.match(sandboxChecklistHtml, /AUTHENTICATION_FAILED/, 'Long, allowlisted safe diagnostic constants must not be over-redacted');
+assert.match(sandboxChecklistHtml, /access_\?token\|token\|secret\|authorization/, 'Sandbox diagnostic redaction must continue to cover tokens, authorization, and secrets');
 assert.doesNotMatch(sandboxChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
 assert.match(sandboxChecklistHtml, /Mainnet capability: false\./);
 
