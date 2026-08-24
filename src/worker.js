@@ -77,6 +77,14 @@ const diagnosticContentSecurityPolicy = nonce => securityHeaders["Content-Securi
   .replace("script-src 'self';", `script-src 'self' https://sdk.minepi.com 'nonce-${nonce}';`)
   .replace("connect-src 'self';", "connect-src 'self' https://api.minepi.com https://sdk.minepi.com;");
 
+// This is deliberately a two-part gate.  The Worker only emits the temporary
+// control UI for a root request referred by Pi Sandbox, and the browser removes
+// it unless it is actually embedded by that same origin.
+const isOfficialPiSandboxRootRequest = request => {
+  try { return new URL(request.headers.get("Referer") || "").origin === "https://sandbox.minepi.com"; }
+  catch { return false; }
+};
+
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const canonicalUrl = path => `${CANONICAL_ORIGIN}${path}`;
 
@@ -706,6 +714,28 @@ export class PaymentLedger {
   }
 }
 
+function piRootSandboxControl(nonce) {
+  return `<section id="pi-root-sandbox-control" aria-labelledby="pi-root-sandbox-title"><style nonce="${nonce}">#pi-root-sandbox-control{margin:2rem auto;padding:1.25rem;max-width:720px;border:2px solid #f5b642;background:#fff8e8;color:#17223b}#pi-root-sandbox-control button{margin:.5rem .5rem .5rem 0;padding:.7rem 1rem;font:inherit}#pi-root-sandbox-control [hidden]{display:none}#pi-root-sandbox-log{overflow-wrap:anywhere}</style><p>PI SANDBOX · TESTNET ONLY · TEMPORARY CONTROL</p><h2 id="pi-root-sandbox-title">Pi Sandbox Payment Lab</h2><section><h3>PI AUTH · TESTNET SANDBOX ONLY</h3><p>No email, password, wallet import, or credential input. The access token is sent only for server verification.</p><button id="pi-root-sandbox-auth" type="button">Prisijungti per Pi Sandbox</button></section><section><h3>PAYMENT LAB · TESTNET SANDBOX ONLY</h3><p>0.01 Test-Pi · PioneerHub Testnet Developer Portal checklist</p><button id="pi-root-sandbox-payment" type="button" disabled>Sukurti 0.01 Test-Pi mokėjimą</button></section><p id="pi-root-sandbox-state" aria-live="polite">Ready for the Sandbox control authentication test.</p><section id="pi-root-sandbox-diagnostics" hidden aria-labelledby="pi-root-sandbox-diagnostics-title"><h3 id="pi-root-sandbox-diagnostics-title">Techninė diagnostika</h3><ol id="pi-root-sandbox-log" aria-live="polite"></ol></section></section><script nonce="${nonce}">(() => {
+  const control = document.querySelector('#pi-root-sandbox-control');
+  const sandboxParent = (() => { try { return window.top !== window.self && new URL(document.referrer).origin === 'https://sandbox.minepi.com'; } catch { return false; } })();
+  if (!sandboxParent) { control.remove(); return; }
+  const authButton = document.querySelector('#pi-root-sandbox-auth'), paymentButton = document.querySelector('#pi-root-sandbox-payment'), state = document.querySelector('#pi-root-sandbox-state'), diagnostics = document.querySelector('#pi-root-sandbox-diagnostics'), log = document.querySelector('#pi-root-sandbox-log');
+  const amount = ${PI_SANDBOX_CHECKLIST_AMOUNT}, memo = ${JSON.stringify(PI_SANDBOX_CHECKLIST_MEMO)}, metadata = ${JSON.stringify(PI_SANDBOX_CHECKLIST_METADATA)}, scopes = ['payments'];
+  let authorization = '', busy = false, initialized = false, incompletePayment = null;
+  const safe = new Set(['SANDBOX_AUTH_OR_PAYMENT_FAILED','ROOT_SANDBOX_AUTH_VERIFIED','CHECKLIST_PAYMENT_COMPLETE']);
+  const redact = value => { value = String(value || ''); if (safe.has(value)) return value; return value.replace(/Bearer\\s+[^\\s,;]+/gi,'Bearer [REDACTED]').replace(/(["']?(?:access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)["']?\\s*[:=]\\s*["']?)([^\\s&,;"']+)/gi,'$1[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g,'[REDACTED]').slice(0,240); };
+  const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
+  const reveal = () => { diagnostics.hidden = false; diagnostics.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+  const showError = (kind, error) => { render('PI_AUTHENTICATE_REJECTION_KIND', kind); render('PI_AUTHENTICATE_ERROR_NAME', error?.name || '[absent]'); render('PI_AUTHENTICATE_ERROR_MESSAGE', error?.message || '[absent]'); render('PI_AUTHENTICATE_ERROR_CODE', error?.code || '[absent]'); render('PI_AUTHENTICATE_ERROR_TYPE', error?.type || '[absent]'); const status = ['status','statusCode','httpStatus','http_status'].map(key => error?.[key]).find(value => typeof value === 'number'); render('PI_AUTHENTICATE_ERROR_STATUS', status === undefined ? '[absent]' : String(status)); };
+  async function loadPiSdk() { if (typeof Pi !== 'undefined') return; await new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = 'https://sdk.minepi.com/pi-sdk.js'; script.onload = resolve; script.onerror = () => reject(new Error('sdk_load_failed')); document.head.append(script); }); }
+  async function initialize() { if (initialized) return; await loadPiSdk(); if (typeof Pi === 'undefined') throw new Error('sdk_missing'); await Pi.init({ version: "2.0", sandbox: true }); initialized = true; }
+  async function serverPayment(paymentId, action, txid) { const response = await fetch('/api/pi/sandbox-checklist/payments/' + encodeURIComponent(paymentId) + '/' + action, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + authorization}, body:JSON.stringify(action === 'complete' ? { txid } : {}) }); const result = await response.json().catch(() => ({})); if (!response.ok || result?.state !== (action === 'approve' ? 'approved' : 'completed')) throw new Error('server_' + action + '_failed'); }
+  function onIncompletePaymentFound(payment) { incompletePayment = payment || {}; paymentButton.disabled = true; render('INCOMPLETE_PAYMENT_FOUND'); state.textContent = 'Incomplete payment found. No new payment will be created; finish it only in the official Pi Testnet wallet.'; }
+  authButton.addEventListener('click', async () => { if (busy) return; busy = true; authButton.disabled = true; try { await initialize(); render('ROOT_SANDBOX_TEST','true'); render('ROOT_APP_PATH','/'); render('PI_AUTHENTICATE_STARTED',JSON.stringify(scopes)); render('PI_AUTH_RUNTIME_CONTEXT',JSON.stringify({sandboxMode:true,topLevel:window.top===window.self,sdkPresent:typeof Pi !== 'undefined',scopesRequested:scopes,piInitResolved:initialized})); let attempt; try { attempt = Pi.authenticate(['payments'], onIncompletePaymentFound); render('PI_AUTHENTICATE_RETURNED',attempt && typeof attempt.then === 'function' ? 'thenable' : typeof attempt); } catch (error) { showError('synchronous_throw',error); throw error; } let result; try { result = await attempt; } catch (error) { showError('promise_rejection',error); throw error; } if (!result?.accessToken || !result?.user?.uid) throw new Error('access_token_or_user_missing'); const response = await fetch('/api/pi/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessToken:result.accessToken})}); const session = await response.json().catch(() => ({})); if (!response.ok || !session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_failed'); authorization = session.authorization; render('ROOT_SANDBOX_AUTH_VERIFIED'); state.textContent = 'ROOT SANDBOX AUTH VERIFIED'; if (!incompletePayment) paymentButton.disabled = false; } catch (error) { render('AUTH_FAILURE_CODE','SANDBOX_AUTH_OR_PAYMENT_FAILED'); reveal(); state.textContent = 'Authentication stopped: SANDBOX_AUTH_OR_PAYMENT_FAILED'; } finally { busy = false; if (!authorization) authButton.disabled = false; } });
+  paymentButton.addEventListener('click', async () => { if (busy || !authorization || incompletePayment) return; busy = true; paymentButton.disabled = true; try { await Pi.createPayment({ amount, memo, metadata }, { onReadyForServerApproval: paymentId => serverPayment(paymentId,'approve'), onReadyForServerCompletion: async (paymentId,txid) => { await serverPayment(paymentId,'complete',txid); render('CHECKLIST_PAYMENT_COMPLETE'); state.textContent = 'CHECKLIST PAYMENT COMPLETE'; }, onCancel: () => { state.textContent = 'Testnet payment cancelled.'; }, onError: () => { state.textContent = 'Payment stopped.'; } }); } finally { busy = false; if (authorization && !incompletePayment) paymentButton.disabled = false; } });
+})();</script>`;
+}
+
 export default { async fetch(request, env) {
   const url = new URL(request.url);
   if (url.pathname === "/robots.txt" && request.method === "GET") {
@@ -802,6 +832,7 @@ export default { async fetch(request, env) {
   const isTransferRehearsalRoute = url.pathname === TRANSFER_REHEARSAL_ROUTE;
   const isKycStatusNavigatorRoute = url.pathname === KYC_STATUS_NAVIGATOR_ROUTE;
   const isMerchantReadinessRoute = url.pathname === MERCHANT_READINESS_ROUTE;
+  const isRootSandboxControl = url.pathname === "/" && isOfficialPiSandboxRootRequest(request);
   const assetRequest = isSignInCallback
     ? new Request(new URL("/", request.url), request)
     : isSafetyCenterRoute ? new Request(new URL("/safety-center-shell.txt", request.url), request)
@@ -825,7 +856,7 @@ export default { async fetch(request, env) {
     const version = `?v=${FRONTEND_BUILD}`;
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
     const shellStatus = `<!-- PioneerHub build: ${FRONTEND_BUILD}; technical status is available through /healthz and diagnostic routes. -->`;
-    if (isSignInCallback) headers.set("Content-Security-Policy", diagnosticContentSecurityPolicy(nonce));
+    if (isSignInCallback || isRootSandboxControl) headers.set("Content-Security-Policy", diagnosticContentSecurityPolicy(nonce));
     let html = (await response.text())
       .replaceAll('href="styles.css"', `href="/styles.css${version}"`)
       .replaceAll('href="safety-center.css"', `href="/safety-center.css${version}"`)
@@ -851,7 +882,7 @@ export default { async fetch(request, env) {
       .replace("Pi loginas nėra aktyvus", "Pi loginas tikrinamas Testnet aplinkoje")
       .replace("Testnet mokėjimas dar nevykdomas", "Testnet mokėjimas užrakintas iki patikrinto prisijungimo")
       .replace("</section>\n<section id=\"community\"", `${shellStatus}</section>\n<section id="community"`)
-      .replace("</body>", isSignInCallback ? `${piSignInCallbackBootstrap(nonce, version)}</body>` : "</body>");
+      .replace("</body>", isSignInCallback ? `${piSignInCallbackBootstrap(nonce, version)}</body>` : isRootSandboxControl ? `${piRootSandboxControl(nonce)}</body>` : "</body>");
     const route = PUBLIC_ROUTE_METADATA.get(url.pathname);
     if (route) {
       html = applyPublicMetadata(html, route);

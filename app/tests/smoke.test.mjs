@@ -56,7 +56,30 @@ assert.match(shellHtml, /href="\/styles\.css\?v=organic-discovery-readiness-v1"/
 assert.match(shellHtml, /src="\/app\.js\?v=organic-discovery-readiness-v1"/);
 assert.doesNotMatch(shellHtml, /Build:/);
 assert.doesNotMatch(shellHtml, /FRONTEND-RUNTIME: PENDING|AUTH TESTING/);
+assert.doesNotMatch(shellHtml, /pi-root-sandbox-control|sdk\.minepi\.com|Prisijungti per Pi Sandbox/, 'normal public root must not receive the temporary Sandbox control');
 assert.equal(shell.headers.get('cache-control'), 'no-store');
+
+const sandboxRoot = await worker.fetch(new Request('https://example.test/', { headers: { Referer: 'https://sandbox.minepi.com/run/control' } }), {
+  ASSETS: { fetch: async () => new Response('<html><head><link href="styles.css"></head><body><main>normal root</main><script src="app.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) },
+  PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {},
+});
+const sandboxRootHtml = await sandboxRoot.text();
+assert.match(sandboxRoot.headers.get('content-security-policy') || '', /https:\/\/sdk\.minepi\.com 'nonce-/);
+assert.match(sandboxRootHtml, /id="pi-root-sandbox-control"/);
+assert.doesNotMatch(sandboxRootHtml, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script>/, 'the SDK must load only after the client confirms the official Sandbox parent');
+assert.match(sandboxRootHtml, /async function loadPiSdk\(\)/);
+assert.match(sandboxRootHtml, /if \(!sandboxParent\) \{ control\.remove\(\); return; \}/);
+assert.match(sandboxRootHtml, /ROOT_SANDBOX_TEST/);
+assert.match(sandboxRootHtml, /ROOT_APP_PATH/);
+assert.match(sandboxRootHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.doesNotMatch(sandboxRootHtml, /\['username', 'payments'\]|wallet_address/);
+assert.match(sandboxRootHtml, /await Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
+assert.match(sandboxRootHtml, /ROOT SANDBOX AUTH VERIFIED/);
+assert.match(sandboxRootHtml, /Pi\.createPayment\(\{ amount, memo, metadata \}/);
+assert.match(sandboxRootHtml, /\/api\/pi\/sandbox-checklist\/payments\//);
+assert.match(sandboxRootHtml, /PI_AUTHENTICATE_REJECTION_KIND/);
+assert.match(sandboxRootHtml, /PI_AUTHENTICATE_ERROR_MESSAGE/);
+assert.doesNotMatch(sandboxRootHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
 
 for (const [route, shellSource, assets] of [
   ['/sauga/passphrase', '<link href="styles.css"><link href="safety-center.css"><script src="safety-center.js"></script>', ['/styles.css', '/safety-center.css', '/safety-center.js']],
