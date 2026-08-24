@@ -220,7 +220,13 @@ assert.match(sandboxChecklist.headers.get('content-security-policy') || '', /htt
 assert.match(sandboxChecklistHtml, /PI SANDBOX · TESTNET CHECKLIST ONLY/);
 assert.match(sandboxChecklistHtml, /<meta name="robots" content="noindex, nofollow, noarchive">/);
 assert.match(sandboxChecklistHtml, /await Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
-assert.match(sandboxChecklistHtml, /Pi\.authenticate\(\['username', 'payments'\], onIncompletePaymentFound\)/);
+assert.match(sandboxChecklistHtml, /Pi\.authenticate\(\['payments'\], onIncompletePaymentFound\)/);
+assert.match(sandboxChecklistHtml, /const scopes = \['payments'\];/);
+assert.doesNotMatch(sandboxChecklistHtml, /\['username', 'payments'\]|wallet_address/);
+assert.match(sandboxChecklistHtml, /Prisijungti per Pi Sandbox/);
+assert.match(sandboxChecklistHtml, /Pirma prisijunk per Pi Sandbox/);
+assert.match(sandboxChecklistHtml, /Techninė diagnostika/);
+assert.doesNotMatch(sandboxChecklistHtml, /data-pioneerhub-product-app|<nav/i, 'Sandbox lab must not load the public PioneerHub shell');
 assert.match(sandboxChecklistHtml, /const amount = 0\.01;/);
 assert.match(sandboxChecklistHtml, /PioneerHub Testnet Developer Portal checklist/);
 assert.match(sandboxChecklistHtml, /purpose":"developer_portal_checklist/);
