@@ -61,8 +61,11 @@ const homeResponseHtml = await home.text();
 assert.match(homeResponseHtml, /class="section route-index"/);
 assert.match(homeResponseHtml, /href="\/mokykis\/pi-wallet"/);
 assert.match(homeResponseHtml, /href="\/radar\/pi-wallet"/);
-assert.doesNotMatch(homeResponseHtml, /BlackMerchanter|Testnet Payment Lab|sdk\.minepi\.com/i);
-assert.doesNotMatch(home.headers.get('content-security-policy') || '', /sdk\.minepi\.com/);
+assert.doesNotMatch(homeResponseHtml, /BlackMerchanter|Testnet Payment Lab|pi-root-sandbox-control/i);
+assert.match(homeResponseHtml, /PALAUKYMO KANALAS/);
+assert.match(homeResponseHtml, /PI TESTNET/);
+assert.match(homeResponseHtml, /sdk\.minepi\.com\/pi-sdk\.js/);
+assert.match(home.headers.get('content-security-policy') || '', /sdk\.minepi\.com/);
 
 const authDiagnostic = await worker.fetch(new Request(`${canonicalOrigin}/diag/pi-auth`), production);
 assert.equal(authDiagnostic.status, 200);
