@@ -207,6 +207,34 @@ const paymentChecklistLocked = await worker.fetch(new Request('https://example.t
 assert.equal(paymentChecklistLocked.status, 503, 'payment checklist must fail closed outside Testnet');
 assert.doesNotMatch(await paymentChecklistLocked.text(), /createPayment|Pi SDK/i);
 
+let sandboxChecklistAssetFetch = false;
+const sandboxChecklist = await worker.fetch(new Request('https://example.test/diag/pi-sandbox-checklist'), {
+  ASSETS: { fetch: async () => { sandboxChecklistAssetFetch = true; return new Response('unreachable'); } },
+  PI_NETWORK: 'testnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {},
+});
+const sandboxChecklistHtml = await sandboxChecklist.text();
+assert.equal(sandboxChecklist.status, 200);
+assert.equal(sandboxChecklistAssetFetch, false, 'Sandbox checklist must not bootstrap PioneerHub product assets');
+assert.match(sandboxChecklist.headers.get('x-robots-tag') || '', /noindex/);
+assert.match(sandboxChecklist.headers.get('content-security-policy') || '', /https:\/\/sdk\.minepi\.com 'nonce-/);
+assert.match(sandboxChecklistHtml, /PI SANDBOX · TESTNET CHECKLIST ONLY/);
+assert.match(sandboxChecklistHtml, /<meta name="robots" content="noindex, nofollow, noarchive">/);
+assert.match(sandboxChecklistHtml, /await Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
+assert.match(sandboxChecklistHtml, /Pi\.authenticate\(\['username', 'payments'\], onIncompletePaymentFound\)/);
+assert.match(sandboxChecklistHtml, /const amount = 0\.01;/);
+assert.match(sandboxChecklistHtml, /PioneerHub Testnet Developer Portal checklist/);
+assert.match(sandboxChecklistHtml, /purpose":"developer_portal_checklist/);
+assert.match(sandboxChecklistHtml, /\/api\/pi\/sandbox-checklist\/payments\//);
+assert.match(sandboxChecklistHtml, /CHECKLIST PAYMENT COMPLETE/);
+assert.doesNotMatch(sandboxChecklistHtml, /PI_TESTNET_API_KEY|PI_SESSION_SECRET|passphrase|seed phrase|private key/i);
+assert.match(sandboxChecklistHtml, /Mainnet capability: false\./);
+
+const sandboxChecklistLocked = await worker.fetch(new Request('https://example.test/diag/pi-sandbox-checklist'), {
+  ASSETS: { fetch: async () => new Response('unreachable') }, PI_NETWORK: 'mainnet', PI_TESTNET_API_KEY: 'test-credential', PI_SESSION_SECRET: 'session-secret', PAYMENT_LEDGER: {}, AUTH_SESSIONS: {},
+});
+assert.equal(sandboxChecklistLocked.status, 503, 'Sandbox checklist must fail closed outside Testnet');
+assert.doesNotMatch(await sandboxChecklistLocked.text(), /Pi SDK|createPayment/i);
+
 const nativeFetchForAuth = globalThis.fetch;
 const storedSessions = [];
 globalThis.fetch = async (url, init) => {
@@ -318,4 +346,15 @@ assert.equal(piCalls, 1);
 assert.equal((await ledger.fetch(paymentInput('complete', 'tx_123'))).status, 200);
 assert.equal((await ledger.fetch(paymentInput('complete', 'tx_123'))).status, 200);
 assert.equal(piCalls, 2);
+globalThis.fetch = nativeFetch;
+
+const sandboxRecords = new Map();
+const sandboxLedger = new PaymentLedger({
+  storage: { get: async key => sandboxRecords.get(key), put: async (key, value) => sandboxRecords.set(key, value) },
+  blockConcurrencyWhile: async callback => callback(),
+}, { PI_TESTNET_API_KEY: 'test-credential' });
+const expectedPayment = { amount: 0.01, memo: 'PioneerHub Testnet Developer Portal checklist', purpose: 'developer_portal_checklist' };
+const sandboxInput = new Request('https://payment.internal/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approve', paymentId: 'sandbox_payment_123', uid: 'sandbox-user', expectedPayment }) });
+globalThis.fetch = async () => Response.json({ user_uid: 'sandbox-user', network: 'Pi Testnet', direction: 'user_to_app', amount: 0.01, memo: 'PioneerHub Testnet Developer Portal checklist', metadata: { purpose: 'developer_portal_checklist' } });
+assert.equal((await sandboxLedger.fetch(sandboxInput)).status, 200, 'sandbox approval must verify the fixed Testnet payment before approval');
 globalThis.fetch = nativeFetch;

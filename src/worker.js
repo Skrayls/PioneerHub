@@ -7,9 +7,13 @@ const FRONTEND_BUILD = "organic-discovery-readiness-v1";
 const PI_AUTH_DIAGNOSTIC_PATH = "/diag/pi-auth";
 const PI_SIGNIN_DIAGNOSTIC_PATH = "/diag/pi-signin";
 const PI_PAYMENT_CHECKLIST_PATH = "/diag/pi-payment-checklist";
+const PI_SANDBOX_CHECKLIST_PATH = "/diag/pi-sandbox-checklist";
 const PI_PAYMENT_CHECKLIST_AMOUNT = 0.01;
 const PI_PAYMENT_CHECKLIST_MEMO = "PioneerHub Testnet Developer Portal verification";
 const PI_PAYMENT_CHECKLIST_METADATA = Object.freeze({ purpose: "developer_portal_checklist" });
+const PI_SANDBOX_CHECKLIST_AMOUNT = 0.01;
+const PI_SANDBOX_CHECKLIST_MEMO = "PioneerHub Testnet Developer Portal checklist";
+const PI_SANDBOX_CHECKLIST_METADATA = Object.freeze({ purpose: "developer_portal_checklist" });
 const PI_SIGNIN_DIAGNOSTIC_STATE_KEY = "pi_signin_diag_state";
 const PI_SIGNIN_CLIENT_ID = "VJPT7Kr-WLTV6XsuV6F5q_-OIqOOsyEMgxVLub59JJ4";
 const PI_SIGNIN_REDIRECT_URI = "https://pioneerhub.andriussimonaitis.workers.dev/signin/callback";
@@ -408,6 +412,66 @@ function piPaymentChecklistShell(nonce) {
 </script></body></html>`;
 }
 
+function piSandboxChecklistShell(nonce) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow, noarchive"><title>Pi Sandbox Testnet checklist</title></head>
+<body><main><p><strong>PI SANDBOX · TESTNET CHECKLIST ONLY.</strong></p><h1>Pi Developer Portal Sandbox transaction checklist</h1><p>This isolated diagnostic is not a PioneerHub product feature. It never collects wallet credentials or connects to a real-value network.</p><p>Mainnet capability: false.</p><ol id="checklist-state" aria-live="polite"><li>1. SDK loaded</li><li>2. Sandbox init complete</li><li>3. Pi authenticate started</li><li>4. Pi authenticate complete</li><li>5. Server auth verification complete</li><li>6. Ready to create 0.01 Test-Pi payment</li><li>7. Payment created</li><li>8. Server approval complete</li><li>9. Waiting for Pioneer/Testnet wallet</li><li>10. Transaction received</li><li>11. Server completion complete</li><li>12. CHECKLIST PAYMENT COMPLETE</li></ol><button id="sandbox-authenticate" type="button" disabled>Authenticate</button><button id="sandbox-create-payment" type="button" disabled>Create 0.01 Test-Pi checklist payment</button><p id="sandbox-state" role="status" aria-live="polite">Loading isolated Sandbox diagnostic…</p><ol id="sandbox-diagnostic-log" aria-live="polite"></ol></main>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script><script nonce="${nonce}">
+(() => {
+  const amount = ${PI_SANDBOX_CHECKLIST_AMOUNT};
+  const memo = ${JSON.stringify(PI_SANDBOX_CHECKLIST_MEMO)};
+  const metadata = ${JSON.stringify(PI_SANDBOX_CHECKLIST_METADATA)};
+  const authButton = document.querySelector('#sandbox-authenticate');
+  const paymentButton = document.querySelector('#sandbox-create-payment');
+  const state = document.querySelector('#sandbox-state');
+  const log = document.querySelector('#sandbox-diagnostic-log');
+  const scopes = ['username', 'payments'];
+  let authorization = ''; let incompletePayment = null; let busy = false; let initialized = false;
+  const redact = value => String(value || '').replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240);
+  const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
+  const setState = value => { state.textContent = value; };
+  const failure = error => { const message = String(error?.message || error || 'unknown').toLowerCase(); return /init|sdk/.test(message) ? 'SANDBOX_INIT_FAILED' : /token/.test(message) ? 'AUTH_ACCESS_TOKEN_MISSING' : /server/.test(message) ? 'SERVER_VERIFICATION_FAILED' : 'SANDBOX_AUTH_OR_PAYMENT_FAILED'; };
+  const paymentIdOf = payment => typeof payment?.identifier === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(payment.identifier) ? payment.identifier : '';
+  const txidOf = payment => typeof payment?.transaction?.txid === 'string' && /^[A-Za-z0-9_-]{1,240}$/.test(payment.transaction.txid) ? payment.transaction.txid : '';
+  async function initialize() {
+    if (initialized) return;
+    render('SDK_LOADED', String(typeof Pi !== 'undefined'));
+    if (typeof Pi === 'undefined') throw new Error('sdk_missing');
+    render('SANDBOX_INIT_STARTED');
+    await Pi.init({ version: "2.0", sandbox: true });
+    initialized = true; render('SANDBOX_INIT_COMPLETE');
+  }
+  async function serverPayment(paymentId, action, txid) {
+    const response = await fetch('/api/pi/sandbox-checklist/payments/' + encodeURIComponent(paymentId) + '/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authorization }, body: JSON.stringify(action === 'complete' ? { txid } : {}) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.state !== (action === 'approve' ? 'approved' : 'completed')) throw new Error('server_' + action + '_failed');
+  }
+  async function authenticate() {
+    await initialize(); render('PI_AUTHENTICATE_STARTED', JSON.stringify(scopes));
+    const result = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+    render('PI_AUTHENTICATE_COMPLETE', JSON.stringify({ accessTokenExists: Boolean(result?.accessToken), uidExists: Boolean(result?.user?.uid), usernameExists: Boolean(result?.user?.username) }));
+    if (typeof result?.accessToken !== 'string' || !result.accessToken || !result?.user?.uid) throw new Error('access_token_or_user_missing');
+    const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result.accessToken }) });
+    const session = await response.json().catch(() => ({}));
+    if (!response.ok || !session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_failed');
+    authorization = session.authorization; render('SERVER_AUTH_VERIFICATION_COMPLETE');
+    if (incompletePayment) { setState('Incomplete payment found. No new payment will be created.'); return; }
+    paymentButton.disabled = false; setState('Ready to create exactly 0.01 Test-Pi in Pi Sandbox.');
+  }
+  async function recoverIncomplete(payment) {
+    const paymentId = paymentIdOf(payment); const txid = txidOf(payment);
+    paymentButton.disabled = true;
+    if (!authorization || !paymentId || !txid) { setState('Incomplete payment found. No new payment will be created; finish it only in the official Pi Testnet wallet.'); return; }
+    await serverPayment(paymentId, 'complete', txid); render('SERVER_COMPLETION_COMPLETE'); setState('CHECKLIST PAYMENT COMPLETE'); render('CHECKLIST_PAYMENT_COMPLETE');
+  }
+  function onIncompletePaymentFound(payment) { incompletePayment = payment || {}; render('INCOMPLETE_PAYMENT_FOUND', JSON.stringify({ paymentPresent: Boolean(payment), transactionPresent: Boolean(payment?.transaction) })); paymentButton.disabled = true; setState('Incomplete payment found. No new payment will be created.'); if (authorization) void recoverIncomplete(incompletePayment).catch(() => render('INCOMPLETE_RECOVERY_FAILED')); }
+  authButton.addEventListener('click', async () => { if (busy) return; busy = true; authButton.disabled = true; try { await authenticate(); } catch (error) { const code = failure(error); render('AUTH_FAILURE_CODE', code); setState('Authentication stopped: ' + code); } finally { busy = false; if (!authorization) authButton.disabled = false; } });
+  paymentButton.addEventListener('click', async () => { if (busy || !authorization || incompletePayment) return; busy = true; paymentButton.disabled = true; try { render('PAYMENT_CREATION_STARTED', JSON.stringify({ amount, memo, metadataPurpose: metadata.purpose })); await Pi.createPayment({ amount, memo, metadata }, { onReadyForServerApproval: async paymentId => { await serverPayment(paymentId, 'approve'); render('SERVER_APPROVAL_COMPLETE'); setState('Server approval complete. Complete the Test-Pi transaction only in the official Pi Sandbox/Testnet wallet.'); }, onReadyForServerCompletion: async (paymentId, txid) => { render('TRANSACTION_RECEIVED'); await serverPayment(paymentId, 'complete', txid); render('SERVER_COMPLETION_COMPLETE'); render('CHECKLIST_PAYMENT_COMPLETE'); setState('CHECKLIST PAYMENT COMPLETE'); }, onCancel: () => setState('Testnet payment cancelled. No transaction completed.'), onError: error => { const code = failure(error); render('PAYMENT_FAILURE_CODE', code); setState('Payment stopped: ' + code); } }); render('PAYMENT_CREATED'); } catch (error) { const code = failure(error); render('PAYMENT_FAILURE_CODE', code); setState('Payment stopped: ' + code); } finally { busy = false; if (authorization && !incompletePayment) paymentButton.disabled = false; } });
+  (async () => { try { await initialize(); authButton.disabled = false; setState('Sandbox init complete. Authenticate before creating the bounded Test-Pi payment.'); } catch (error) { const code = failure(error); render('SANDBOX_INIT_FAILURE_CODE', code); setState('Sandbox init stopped: ' + code); } })();
+})();
+</script></body></html>`;
+}
+
 function piSignInDiagnosticShell(nonce) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow, noarchive"><title>Pi Sign-In Isolation Harness</title></head>
@@ -539,13 +603,13 @@ async function readJson(request) {
   try { return await request.json(); } catch { return null; }
 }
 
-async function paymentRequest(env, paymentId, action, uid, txid) {
+async function paymentRequest(env, paymentId, action, uid, txid, expectedPayment = null) {
   const id = env.PAYMENT_LEDGER.idFromName(paymentId);
   const stub = env.PAYMENT_LEDGER.get(id);
   const response = await stub.fetch("https://payment.internal/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, paymentId, uid, txid }),
+    body: JSON.stringify({ action, paymentId, uid, txid, expectedPayment }),
   });
   return { status: response.status, body: await response.json() };
 }
@@ -555,13 +619,18 @@ export class PaymentLedger {
 
   async fetch(request) {
     const input = await request.json();
-    const { action, paymentId, uid, txid } = input || {};
+    const { action, paymentId, uid, txid, expectedPayment } = input || {};
     if (!this.env.PI_TESTNET_API_KEY || !PAYMENT_ID.test(paymentId) || typeof uid !== "string") return json({ error: "invalid_request" }, 400);
     return this.state.blockConcurrencyWhile(async () => {
       const stored = await this.state.storage.get("payment");
       if (stored && stored.uid !== uid) return json({ error: "payment_owner_mismatch" }, 403);
       if (action === "approve") {
         if (stored?.status === "approved" || stored?.status === "completed") return json({ state: stored.status, idempotent: true });
+        if (expectedPayment) {
+          const verification = await fetch(`${PI_API}/payments/${encodeURIComponent(paymentId)}`, { headers: { Authorization: `Key ${this.env.PI_TESTNET_API_KEY}` } });
+          const payment = verification.ok ? await verification.json().catch(() => null) : null;
+          if (!payment || payment.user_uid !== uid || payment.network !== "Pi Testnet" || payment.direction !== "user_to_app" || payment.amount !== expectedPayment.amount || payment.memo !== expectedPayment.memo || payment.metadata?.purpose !== expectedPayment.purpose) return json({ error: "checklist_payment_mismatch" }, 403);
+        }
         const remote = await fetch(`${PI_API}/payments/${encodeURIComponent(paymentId)}/approve`, {
           method: "POST", headers: { Authorization: `Key ${this.env.PI_TESTNET_API_KEY}` },
         });
@@ -604,6 +673,11 @@ export default { async fetch(request, env) {
     return new Response(piPaymentChecklistShell(nonce), {
       headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive", "Content-Security-Policy": contentSecurityPolicy },
     });
+  }
+  if (url.pathname === PI_SANDBOX_CHECKLIST_PATH && request.method === "GET") {
+    if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER || !env.AUTH_SESSIONS) return json({ error: "testnet_configuration_required" }, 503);
+    const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
+    return new Response(piSandboxChecklistShell(nonce), { headers: { ...securityHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive", "Content-Security-Policy": diagnosticContentSecurityPolicy(nonce) } });
   }
   if (url.pathname === PI_AUTH_DIAGNOSTIC_PATH && request.method === "GET") {
     const nonce = base64url(crypto.getRandomValues(new Uint8Array(16)));
@@ -655,6 +729,16 @@ export default { async fetch(request, env) {
     if (!session) return json({ error: "authentication_required" }, 401);
     const data = await readJson(request);
     const result = await paymentRequest(env, paymentRoute[1], paymentRoute[2], session.uid, data?.txid);
+    return json(result.body, result.status);
+  }
+  const sandboxPaymentRoute = url.pathname.match(/^\/api\/pi\/sandbox-checklist\/payments\/([A-Za-z0-9_-]{1,160})\/(approve|complete)$/);
+  if (sandboxPaymentRoute && request.method === "POST") {
+    if (env.PI_NETWORK !== "testnet" || !env.PI_TESTNET_API_KEY || !env.PI_SESSION_SECRET || !env.PAYMENT_LEDGER) return json({ error: "testnet_configuration_required" }, 503);
+    const session = await readSession(request, env);
+    if (!session) return json({ error: "authentication_required" }, 401);
+    const data = await readJson(request);
+    const expectedPayment = { amount: PI_SANDBOX_CHECKLIST_AMOUNT, memo: PI_SANDBOX_CHECKLIST_MEMO, purpose: PI_SANDBOX_CHECKLIST_METADATA.purpose };
+    const result = await paymentRequest(env, sandboxPaymentRoute[1], sandboxPaymentRoute[2], session.uid, data?.txid, expectedPayment);
     return json(result.body, result.status);
   }
   if (url.pathname === "/validation-key.txt" && env.PI_DOMAIN_VALIDATION_CONTENT) return new Response(env.PI_DOMAIN_VALIDATION_CONTENT, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'" } });
