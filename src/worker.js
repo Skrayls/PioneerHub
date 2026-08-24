@@ -437,12 +437,12 @@ function piSandboxChecklistShell(nonce) {
   const state = document.querySelector('#sandbox-state');
   const log = document.querySelector('#sandbox-diagnostic-log');
   const diagnostics = document.querySelector('#sandbox-diagnostics');
-  const scopes = ['payments'];
+  const scopes = [];
   let authorization = ''; let incompletePayment = null; let busy = false; let initialized = false;
   // These are application-generated diagnostic codes, not credentials. Keep this
   // deliberately finite so the general long-string redaction still protects IDs
   // and tokens returned by SDK or network errors.
-  const safeDiagnosticCodes = new Set(['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED', 'AUTHENTICATION_FAILED', 'AUTH_PI_PRIMARY_FAILED', 'AUTH_PI_CONSENT_SCOPE_FAILED', 'AUTH_PI_INIT_FAILED']);
+  const safeDiagnosticCodes = new Set(['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED', 'AUTHENTICATION_FAILED', 'AUTH_PI_PRIMARY_FAILED', 'AUTH_PI_CONSENT_SCOPE_FAILED', 'AUTH_PI_INIT_FAILED', 'BASE_AUTH_FAILED_WITH_EMPTY_SCOPES', 'PI_PLATFORM_APP_AUTH_BLOCKED']);
   const redact = value => { value = String(value || ''); if (safeDiagnosticCodes.has(value)) return value; return value.replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(["']?(?:access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)["']?\\s*[:=]\\s*["']?)([^\\s&,;"']+)/gi, '$1[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240); };
   const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
   const setState = value => { state.textContent = value; };
@@ -488,7 +488,7 @@ function piSandboxChecklistShell(nonce) {
     render('PI_AUTH_RUNTIME_CONTEXT', JSON.stringify({ sandboxMode: true, origin: location.origin, topLevel: window.top === window.self, sdkPresent: typeof Pi !== 'undefined', scopesRequested: scopes, piInitResolved: initialized }));
     let authPromise;
     try {
-      authPromise = Pi.authenticate(['payments'], onIncompletePaymentFound);
+      authPromise = Pi.authenticate([], onIncompletePaymentFound);
       render('PI_AUTHENTICATE_RETURNED', authPromise && typeof authPromise.then === 'function' ? 'thenable' : typeof authPromise);
     } catch (error) {
       renderPiAuthError('synchronous_throw', error);
@@ -506,9 +506,8 @@ function piSandboxChecklistShell(nonce) {
     const response = await fetch('/api/pi/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: result.accessToken }) });
     const session = await response.json().catch(() => ({}));
     if (!response.ok || !session?.authenticated || typeof session.authorization !== 'string') throw new Error('server_auth_failed');
-    authorization = session.authorization; render('SERVER_AUTH_VERIFICATION_COMPLETE');
-    if (incompletePayment) { setState('Incomplete payment found. No new payment will be created.'); return; }
-    paymentButton.disabled = false; paymentButton.textContent = 'Sukurti 0.01 Test-Pi mokėjimą'; setState('Testnet prisijungimas patikrintas serveryje. Galite sukurti tiksliai 0.01 Test-Pi mokėjimą.');
+    authorization = session.authorization; render('SERVER_AUTH_VERIFICATION_COMPLETE'); render('BASE_PI_AUTH_VERIFIED');
+    setState('BASE PI AUTH VERIFIED');
   }
   async function recoverIncomplete(payment) {
     const paymentId = paymentIdOf(payment); const txid = txidOf(payment);
@@ -517,7 +516,7 @@ function piSandboxChecklistShell(nonce) {
     await serverPayment(paymentId, 'complete', txid); render('SERVER_COMPLETION_COMPLETE'); setState('CHECKLIST PAYMENT COMPLETE'); render('CHECKLIST_PAYMENT_COMPLETE');
   }
   function onIncompletePaymentFound(payment) { incompletePayment = payment || {}; render('INCOMPLETE_PAYMENT_FOUND', JSON.stringify({ paymentPresent: Boolean(payment), transactionPresent: Boolean(payment?.transaction) })); paymentButton.disabled = true; setState('Incomplete payment found. No new payment will be created.'); if (authorization) void recoverIncomplete(incompletePayment).catch(() => render('INCOMPLETE_RECOVERY_FAILED')); }
-  authButton.addEventListener('click', async () => { if (busy) return; busy = true; authButton.disabled = true; try { await authenticate(); } catch (error) { const code = failure(error); render('AUTH_FAILURE_CODE', code); revealDiagnostics(); setState('Authentication stopped: ' + code); } finally { busy = false; if (!authorization) authButton.disabled = false; } });
+  authButton.addEventListener('click', async () => { if (busy) return; busy = true; authButton.disabled = true; try { await authenticate(); } catch (error) { render('BASE_AUTH_FAILED_WITH_EMPTY_SCOPES'); render('PI_PLATFORM_APP_AUTH_BLOCKED'); render('AUTH_FAILURE_CODE', 'BASE_AUTH_FAILED_WITH_EMPTY_SCOPES'); revealDiagnostics(); setState('PI PLATFORM APP AUTH BLOCKED'); } finally { busy = false; if (!authorization) authButton.disabled = false; } });
   paymentButton.addEventListener('click', async () => { if (busy || !authorization || incompletePayment) return; busy = true; paymentButton.disabled = true; try { render('PAYMENT_CREATION_STARTED', JSON.stringify({ amount, memo, metadataPurpose: metadata.purpose })); await Pi.createPayment({ amount, memo, metadata }, { onReadyForServerApproval: async paymentId => { await serverPayment(paymentId, 'approve'); render('SERVER_APPROVAL_COMPLETE'); setState('Server approval complete. Complete the Test-Pi transaction only in the official Pi Sandbox/Testnet wallet.'); }, onReadyForServerCompletion: async (paymentId, txid) => { render('TRANSACTION_RECEIVED'); await serverPayment(paymentId, 'complete', txid); render('SERVER_COMPLETION_COMPLETE'); render('CHECKLIST_PAYMENT_COMPLETE'); setState('CHECKLIST PAYMENT COMPLETE'); }, onCancel: () => setState('Testnet payment cancelled. No transaction completed.'), onError: error => { const code = failure(error); render('PAYMENT_FAILURE_CODE', code); setState('Payment stopped: ' + code); } }); render('PAYMENT_CREATED'); } catch (error) { const code = failure(error); render('PAYMENT_FAILURE_CODE', code); setState('Payment stopped: ' + code); } finally { busy = false; if (authorization && !incompletePayment) paymentButton.disabled = false; } });
   (async () => { try { await initialize(); authButton.disabled = false; setState('Sandbox init complete. Authenticate before creating the bounded Test-Pi payment.'); } catch (error) { const code = failure(error); render('SANDBOX_INIT_FAILURE_CODE', code); setState('Sandbox init stopped: ' + code); } })();
 })();
