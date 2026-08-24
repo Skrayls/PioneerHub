@@ -226,6 +226,10 @@ assert.doesNotMatch(sandboxChecklistHtml, /\['username', 'payments'\]|wallet_add
 assert.match(sandboxChecklistHtml, /Prisijungti per Pi Sandbox/);
 assert.match(sandboxChecklistHtml, /Pirma prisijunk per Pi Sandbox/);
 assert.match(sandboxChecklistHtml, /Techninė diagnostika/);
+assert.match(sandboxChecklistHtml, /<section id="sandbox-diagnostics" hidden aria-labelledby="sandbox-diagnostics-title">/, 'Sandbox diagnostics must be a non-disclosure section hidden until an auth failure');
+assert.doesNotMatch(sandboxChecklistHtml, /<details id="sandbox-diagnostics">/, 'Sandbox diagnostics must not depend on native details support');
+assert.match(sandboxChecklistHtml, /const revealDiagnostics = \(\) => \{\s*diagnostics\.hidden = false;/, 'Sandbox auth failure must reveal diagnostics without a disclosure tap');
+assert.match(sandboxChecklistHtml, /revealDiagnostics\(\); setState\('Authentication stopped: ' \+ code\);/, 'Sandbox auth failure must reveal diagnostics before reporting the failure state');
 assert.doesNotMatch(sandboxChecklistHtml, /data-pioneerhub-product-app|<nav/i, 'Sandbox lab must not load the public PioneerHub shell');
 assert.match(sandboxChecklistHtml, /const amount = 0\.01;/);
 assert.match(sandboxChecklistHtml, /PioneerHub Testnet Developer Portal checklist/);
