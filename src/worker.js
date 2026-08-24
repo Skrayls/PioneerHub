@@ -427,7 +427,11 @@ function piSandboxChecklistShell(nonce) {
   const log = document.querySelector('#sandbox-diagnostic-log');
   const scopes = ['username', 'payments'];
   let authorization = ''; let incompletePayment = null; let busy = false; let initialized = false;
-  const redact = value => String(value || '').replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240);
+  // These are application-generated diagnostic codes, not credentials. Keep this
+  // deliberately finite so the general long-string redaction still protects IDs
+  // and tokens returned by SDK or network errors.
+  const safeDiagnosticCodes = new Set(['SANDBOX_INIT_FAILED', 'AUTH_ACCESS_TOKEN_MISSING', 'SERVER_VERIFICATION_FAILED', 'SANDBOX_AUTH_OR_PAYMENT_FAILED']);
+  const redact = value => { value = String(value || ''); if (safeDiagnosticCodes.has(value)) return value; return value.replace(/Bearer\\s+[^\\s,;]+/gi, 'Bearer [REDACTED]').replace(/(access_?token|token|secret|authorization|api_?key|pass(?:phrase)?|wallet|private_?key)=([^\\s&,;]+)/gi, '$1=[REDACTED]').replace(/[A-Za-z0-9_-]{24,}/g, '[REDACTED]').slice(0, 240); };
   const render = (marker, detail = '') => { const item = document.createElement('li'); item.textContent = marker + (detail ? ': ' + redact(detail) : ''); log.append(item); };
   const setState = value => { state.textContent = value; };
   const failure = error => { const message = String(error?.message || error || 'unknown').toLowerCase(); return /init|sdk/.test(message) ? 'SANDBOX_INIT_FAILED' : /token/.test(message) ? 'AUTH_ACCESS_TOKEN_MISSING' : /server/.test(message) ? 'SERVER_VERIFICATION_FAILED' : 'SANDBOX_AUTH_OR_PAYMENT_FAILED'; };
