@@ -37,6 +37,9 @@ assert.equal((worker.match(/Pi\.createPayment\(/g) || []).length, 3, 'createPaym
 assert.match(worker, /await Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
 assert.equal((worker.match(/sandbox: true/g) || []).length, 2, 'Sandbox mode must be isolated to the diagnostic harness and root Support Channel');
 assert.match(worker, /PI_SUPPORT_CHANNEL_AMOUNT = 0\.01/);
+assert.match(worker, /scopes = \["username", "payments", "roles", "in_app_notifications"\]/);
+assert.match(worker, /Pi\.authenticate\(scopes, onIncompletePaymentFound\)/);
+assert.match(worker, /PI_AUTHENTICATE_RESOLVED/);
 assert.match(worker, /PI_SUPPORT_CHANNEL_MEMO = "PioneerHub Support Channel"/);
 assert.match(worker, /purpose: "pioneerhub_support_channel"/);
 assert.match(worker, /\/api\/pi\/support-channel\/payments\//);
