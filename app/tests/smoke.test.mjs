@@ -68,7 +68,15 @@ assert.match(shellHtml, /scopes = \["username", "payments", "roles", "in_app_not
 assert.match(shellHtml, /Pi\.authenticate\(scopes, onIncompletePaymentFound\)/);
 assert.match(shellHtml, /PI_AUTHENTICATE_RESOLVED/);
 assert.match(shellHtml, /accessTokenExists: Boolean\(result\?\.accessToken\), userExists: Boolean\(result\?\.user\), uidExists: Boolean\(result\?\.user\?\.uid\)/);
-assert.match(shellHtml, /await Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
+assert.match(shellHtml, /<script src="https:\/\/sdk\.minepi\.com\/pi-sdk\.js"><\/script><script nonce=/);
+assert.match(shellHtml, /return Pi\.init\(\{ version: "2\.0", sandbox: true \}\)/);
+assert.match(shellHtml, /PI_SDK_SCRIPT_STATIC/);
+assert.match(shellHtml, /PI_SDK_AVAILABLE_ON_LOAD/);
+assert.match(shellHtml, /PI_INIT_ON_LOAD_STARTED/);
+assert.match(shellHtml, /PI_INIT_ON_LOAD_COMPLETE/);
+assert.match(shellHtml, /AUTH_BUTTON_REQUIRES_NO_BOOTSTRAP/);
+assert.doesNotMatch(shellHtml, /document\.createElement\('script'\)/);
+assert.doesNotMatch(shellHtml, /await initialize\(\)/);
 assert.match(shellHtml, /\/api\/pi\/support-channel\/payments\//);
 assert.doesNotMatch(shellHtml, /pi-root-sandbox-control|ancestorOrigins|wallet_address|<input|<textarea/i);
 assert.equal(shell.headers.get('cache-control'), 'no-store');
