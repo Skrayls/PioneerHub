@@ -17,7 +17,10 @@ assert.doesNotMatch(homeHtml, /Build:/);
 assert.match(homeHtml, /app\.js\?v=organic-discovery-readiness-v1/);
 assert.match(homeHtml, /href="\/merchant-readiness"/);
 assert.match(homeHtml, /class="section route-index"/);
-assert.doesNotMatch(homeHtml, /BlackMerchanter|referral_open|Testnet Payment Lab|sdk\.minepi\.com/i);
+assert.doesNotMatch(homeHtml, /BlackMerchanter|referral_open|Testnet Payment Lab/i);
+assert.match(homeHtml, /scopes = \["username", "payments", "roles", "in_app_notifications"\]/);
+assert.match(homeHtml, /Pi\.authenticate\(scopes, onIncompletePaymentFound\)/);
+assert.match(homeHtml, /PI_AUTHENTICATE_RESOLVED/);
 for (const [header, pattern] of Object.entries({
   'content-security-policy': /frame-ancestors 'self' https:\/\/pinet\.com https:\/\/\*\.pinet\.com https:\/\/minepi\.com https:\/\/\*\.minepi\.com/,
   'x-content-type-options': /nosniff/,
