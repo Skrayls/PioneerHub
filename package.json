@@ -19,7 +19,7 @@
     "validate:pi-boundary": "node scripts/validate-pi-boundary.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "1.63.0",
     "wrangler": "^4.123.0"
   }
 }
